@@ -160,68 +160,7 @@ async def preview_content(
         )
 
 
-@router.post("/feeds/{feed_id}", response_class=RedirectResponse)
-async def update_feed(
-    feed_id: int,
-    name: str = Form(...),
-    url: str = Form(...),
-    article_selector: Optional[str] = Form(None),
-    content_selector: Optional[str] = Form(None),
-    translation_enabled: bool = Form(False),
-    ai_provider: str = Form("openai"),
-    ai_model: Optional[str] = Form(None),
-    update_interval: int = Form(60),
-    feed_type: str = Form("webpage"),
-    db: Session = Depends(get_db),
-    _: None = Depends(require_login),
-):
-    feed = db.query(Feed).filter(Feed.id == feed_id).first()
-    if not feed:
-        raise HTTPException(status_code=404, detail="Feed not found")
-    feed.name = name
-    feed.url = url
-    feed.article_selector = article_selector or None
-    feed.content_selector = content_selector or None
-    feed.translation_enabled = translation_enabled
-    feed.ai_provider = ai_provider
-    feed.ai_model = ai_model or None
-    feed.update_interval = update_interval
-    feed.feed_type = feed_type
-    db.commit()
-    register_feed(feed)
-    return RedirectResponse(url="/", status_code=303)
-
-
-@router.post("/feeds/{feed_id}/delete", response_class=RedirectResponse)
-async def delete_feed(feed_id: int, db: Session = Depends(get_db), _: None = Depends(require_login)):
-    feed = db.query(Feed).filter(Feed.id == feed_id).first()
-    if not feed:
-        raise HTTPException(status_code=404, detail="Feed not found")
-    remove_feed_job(feed_id)
-    db.delete(feed)
-    db.commit()
-    return RedirectResponse(url="/", status_code=303)
-
-
-@router.post("/feeds/{feed_id}/refresh", response_class=RedirectResponse)
-async def refresh_feed(feed_id: int, db: Session = Depends(get_db), _: None = Depends(require_login)):
-    feed = db.query(Feed).filter(Feed.id == feed_id).first()
-    if not feed:
-        raise HTTPException(status_code=404, detail="Feed not found")
-    asyncio.create_task(run_feed_now(feed_id))  # 后台执行，立即返回
-    return RedirectResponse(url="/", status_code=303)
-
-
-@router.post("/feeds/{feed_id}/retranslate", response_class=RedirectResponse)
-async def retranslate(feed_id: int, db: Session = Depends(get_db), _: None = Depends(require_login)):
-    feed = db.query(Feed).filter(Feed.id == feed_id).first()
-    if not feed:
-        raise HTTPException(status_code=404, detail="Feed not found")
-    asyncio.create_task(retranslate_feed(feed_id))  # 后台执行，立即返回
-    return RedirectResponse(url="/", status_code=303)
-
-
-# ── 导入导出 ───────────────────────────────────────────────────────────────
+# ── 导入导出（必须在 /feeds/{feed_id} 之前定义）───────────────────────────────
 
 @router.get("/feeds/export")
 async def export_feeds(db: Session = Depends(get_db), _: None = Depends(require_login)):
@@ -299,5 +238,48 @@ async def import_feeds(
         "import.html",
         {"request": request, "imported": imported, "errors": errors},
     )
+
+
+@router.post("/feeds/{feed_id}", response_class=RedirectResponse)
+async def update_feed(
+    feed_id: int,
+    name: str = Form(...),
+    url: str = Form(...),
+    article_selector: Optional[str] = Form(None),
+    content_selector: Optional[str] = Form(None),
+    translation_enabled: bool = Form(False),
+    ai_provider: str = Form("openai"),
+    ai_model: Optional[str] = Form(None),
+    update_interval: int = Form(60),
+    feed_type: str = Form("webpage"),
+    db: Session = Depends(get_db),
+    _: None = Depends(require_login),
+):
+    feed = db.query(Feed).filter(Feed.id == feed_id).first()
+    if not feed:
+        raise HTTPException(status_code=404, detail="Feed not found")
+    feed.name = name
+    feed.url = url
+    feed.article_selector = article_selector or None
+    feed.content_selector = content_selector or None
+    feed.translation_enabled = translation_enabled
+    feed.ai_provider = ai_provider
+    feed.ai_model = ai_model or None
+    feed.update_interval = update_interval
+    feed.feed_type = feed_type
+    db.commit()
+    register_feed(feed)
+    return RedirectResponse(url="/", status_code=303)
+
+
+@router.post("/feeds/{feed_id}/delete", response_class=RedirectResponse)
+async def delete_feed(feed_id: int, db: Session = Depends(get_db), _: None = Depends(require_login)):
+    feed = db.query(Feed).filter(Feed.id == feed_id).first()
+    if not feed:
+        raise HTTPException(status_code=404, detail="Feed not found")
+    remove_feed_job(feed_id)
+    db.delete(feed)
+    db.commit()
+    return RedirectResponse(url="/", status_code=303)
 
 

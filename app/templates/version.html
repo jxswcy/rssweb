@@ -8,23 +8,49 @@
   <div class="card">
     <div class="card-body">
       <div style="font-size:0.85rem;color:#86868b;margin-bottom:0.5rem;">当前版本</div>
-      <div style="font-size:1.2rem;font-weight:600;margin-bottom:1.5rem;">v1.1.0</div>
+      <div style="font-size:1.2rem;font-weight:600;margin-bottom:1.5rem;">v1.2.0</div>
 
-      <div style="font-size:0.85rem;font-weight:600;color:#3a3a3c;margin-bottom:0.8rem;">功能更新</div>
-      <ul style="font-size:0.9rem;line-height:1.8;margin-bottom:1.5rem;padding-left:1.2rem;">
-        <li>新增「RSS 源」订阅类型，支持直接订阅标准 RSS/Atom 源</li>
-        <li>新增 Google 翻译（免费）提供方，无需 API Key</li>
-        <li>新增管理界面登录认证，默认密码 admin</li>
-        <li>新增订阅导入导出功能（JSON 格式）</li>
-        <li>新增版本信息页面</li>
-        <li>优化：RSS 源支持 &lt;guid&gt; 作为文章链接</li>
-        <li>优化：RSS 源支持文章预览</li>
-        <li>优化：翻译设置页面布局调整</li>
-      </ul>
+      <div style="font-size:0.85rem;font-weight:600;color:#3a3a3c;margin-bottom:0.8rem;">更新日志</div>
 
-      <div style="font-size:0.85rem;font-weight:600;color:#3a3a3c;margin-bottom:0.8rem;">技术栈</div>
-      <div style="font-size:0.85rem;line-height:1.7;color:#6e6e73;">
-        FastAPI + SQLAlchemy + SQLite + Jinja2 + HTMX
+      <!-- v1.2.0 -->
+      <div style="margin-bottom:1.5rem;">
+        <div style="font-size:0.9rem;font-weight:600;color:#1d1d1f;margin-bottom:0.4rem;">v1.2.0 (2026-04-10)</div>
+        <ul style="font-size:0.85rem;line-height:1.7;color:#6e6e73;margin:0;padding-left:1.2rem;">
+          <li>修复：订阅导入路由冲突问题</li>
+        </ul>
+      </div>
+
+      <!-- v1.1.0 -->
+      <div style="margin-bottom:1.5rem;">
+        <div style="font-size:0.9rem;font-weight:600;color:#1d1d1f;margin-bottom:0.4rem;">v1.1.0 (2026-04-09)</div>
+        <ul style="font-size:0.85rem;line-height:1.7;color:#6e6e73;margin:0;padding-left:1.2rem;">
+          <li>新增「RSS 源」订阅类型，支持直接订阅标准 RSS/Atom 源</li>
+          <li>新增 Google 翻译（免费）提供方，无需 API Key</li>
+          <li>新增管理界面登录认证，默认密码 admin</li>
+          <li>新增订阅导入导出功能（JSON 格式）</li>
+          <li>新增版本信息页面</li>
+          <li>优化：RSS 源支持 &lt;guid&gt; 作为文章链接</li>
+          <li>优化：RSS 源支持文章预览</li>
+          <li>优化：翻译设置页面布局调整</li>
+        </ul>
+      </div>
+
+      <!-- v1.0.0 -->
+      <div style="margin-bottom:0;">
+        <div style="font-size:0.9rem;font-weight:600;color:#1d1d1f;margin-bottom:0.4rem;">v1.0.0 (2026-04-08)</div>
+        <ul style="font-size:0.85rem;line-height:1.7;color:#6e6e73;margin:0;padding-left:1.2rem;">
+          <li>初始版本发布</li>
+          <li>支持网页抓取生成 RSS Feed</li>
+          <li>支持 AI 双语翻译（OpenRouter、OpenAI、Gemini、Claude、DeepSeek）</li>
+          <li>支持智能 Selector 推导</li>
+        </ul>
+      </div>
+
+      <div style="border-top:1px solid #e5e5ea;margin-top:1.5rem;padding-top:1rem;">
+        <div style="font-size:0.85rem;font-weight:600;color:#3a3a3c;margin-bottom:0.5rem;">技术栈</div>
+        <div style="font-size:0.85rem;line-height:1.7;color:#6e6e73;">
+          FastAPI + SQLAlchemy + SQLite + Jinja2 + HTMX
+        </div>
       </div>
     </div>
   </div>
