@@ -14,6 +14,9 @@
   .form-actions { display: flex; gap: 0.8rem; margin-top: 1.5rem; }
   .interval-options { display: flex; gap: 0.5rem; flex-wrap: wrap; }
   .interval-options label { display: flex; align-items: center; gap: 0.3rem; font-weight: 400; cursor: pointer; }
+  .model-row { display: flex; gap: 0.6rem; align-items: flex-start; }
+  .model-row select { flex: 0 0 160px; }
+  .model-row input { flex: 1; }
 </style>
 {% endblock %}
 
@@ -39,30 +42,33 @@
           <input type="url" id="url" name="url" required value="{{ feed.url if feed else '' }}" placeholder="https://example.com/blog">
         </div>
 
-        <div class="section-title">CSS Selector（可留空，自动识别）</div>
+        <div class="section-title">文章 Selector</div>
         <div class="form-group">
-          <label for="title_selector">标题 Selector</label>
-          <input type="text" id="title_selector" name="title_selector" value="{{ feed.title_selector if feed and feed.title_selector else '' }}" placeholder=".post-title a">
-        </div>
-        <div class="form-group">
-          <label for="link_selector">链接 Selector</label>
-          <input type="text" id="link_selector" name="link_selector" value="{{ feed.link_selector if feed and feed.link_selector else '' }}" placeholder=".post-title a">
-        </div>
-        <div class="form-group">
-          <label for="content_selector">正文 Selector</label>
-          <input type="text" id="content_selector" name="content_selector" value="{{ feed.content_selector if feed and feed.content_selector else '' }}" placeholder=".article-content">
-          <div class="hint">留空则使用 trafilatura 自动提取正文</div>
+          <label for="article_selector">文章 Selector</label>
+          <input type="text" id="article_selector" name="article_selector"
+            value="{{ feed.article_selector if feed and feed.article_selector else '' }}"
+            placeholder="从浏览器开发者工具复制文章标题或链接的 CSS Selector">
+          <div class="hint">从浏览器开发者工具右键复制目标文章的 Selector，系统自动提取标题和链接。留空则自动识别。</div>
         </div>
 
         <button type="button" class="btn btn-secondary"
           hx-post="/feeds/preview"
-          hx-include="#url,#title_selector,#link_selector"
+          hx-include="#url,#article_selector"
           hx-target="#preview-box"
           hx-indicator="#preview-spinner">
           预览文章列表
         </button>
         <span id="preview-spinner" class="htmx-indicator" style="font-size:0.85rem;color:#86868b;margin-left:0.5rem;">加载中…</span>
         <div id="preview-box" class="preview-box"></div>
+
+        <div class="section-title">正文抓取</div>
+        <div class="form-group">
+          <label for="content_selector">正文 Selector</label>
+          <input type="text" id="content_selector" name="content_selector"
+            value="{{ feed.content_selector if feed and feed.content_selector else '' }}"
+            placeholder=".article-content">
+          <div class="hint">留空则使用 trafilatura 自动提取正文</div>
+        </div>
 
         <div class="section-title">翻译设置</div>
         <div class="form-group toggle-row">
@@ -71,11 +77,20 @@
           <label for="translation_enabled" style="margin:0">启用双语翻译</label>
         </div>
         <div class="form-group">
-          <label for="ai_provider">AI 翻译提供方</label>
-          <select id="ai_provider" name="ai_provider">
-            <option value="openai" {% if not feed or feed.ai_provider == 'openai' %}selected{% endif %}>OpenAI (GPT-4o mini)</option>
-            <option value="claude" {% if feed and feed.ai_provider == 'claude' %}selected{% endif %}>Anthropic Claude</option>
-          </select>
+          <label>AI 翻译提供方 &amp; 模型</label>
+          <div class="model-row">
+            <select id="ai_provider" name="ai_provider" onchange="onProviderChange(this.value)">
+              <option value="openai"      {% if not feed or feed.ai_provider == 'openai' %}selected{% endif %}>OpenAI</option>
+              <option value="deepseek"    {% if feed and feed.ai_provider == 'deepseek' %}selected{% endif %}>DeepSeek</option>
+              <option value="openrouter"  {% if feed and feed.ai_provider == 'openrouter' %}selected{% endif %}>OpenRouter</option>
+              <option value="claude"      {% if feed and feed.ai_provider == 'claude' %}selected{% endif %}>Anthropic Claude</option>
+            </select>
+            <input type="text" id="ai_model" name="ai_model" list="model-suggestions"
+              value="{{ feed.ai_model if feed and feed.ai_model else '' }}"
+              placeholder="模型名称（留空使用默认）">
+            <datalist id="model-suggestions"></datalist>
+          </div>
+          <div class="hint" id="model-hint"></div>
         </div>
 
         <div class="section-title">更新频率</div>
@@ -99,4 +114,44 @@
     </div>
   </form>
 </div>
+
+<script>
+const PROVIDER_MODELS = {
+  openai:      { models: ["gpt-4o", "gpt-4o-mini"], default: "gpt-4o-mini" },
+  deepseek:    { models: ["deepseek-chat", "deepseek-reasoner"], default: "deepseek-chat" },
+  openrouter:  { models: ["openai/gpt-4o", "openai/gpt-4o-mini", "anthropic/claude-3.5-sonnet", "google/gemini-2.0-flash", "deepseek/DeepSeek-V3"], default: "openai/gpt-4o-mini" },
+  claude:      { models: ["claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022"], default: "claude-3-5-haiku-20241022" },
+};
+
+function onProviderChange(provider) {
+  const info = PROVIDER_MODELS[provider];
+  if (!info) return;
+  const modelInput = document.getElementById("ai_model");
+  const datalist = document.getElementById("model-suggestions");
+  const hint = document.getElementById("model-hint");
+
+  // 更新 datalist
+  datalist.innerHTML = info.models
+    .map(m => `<option value="${m}">`)
+    .join("");
+
+  // 填入默认模型
+  modelInput.value = info.default;
+  modelInput.placeholder = `默认: ${info.default}`;
+
+  // 更新提示
+  hint.textContent = `推荐模型（从高到低）：${info.models.join("、")}`;
+}
+
+// 页面初始化：设置当前提供方的 datalist
+(function() {
+  const provider = document.getElementById("ai_provider").value;
+  onProviderChange(provider);
+  // 如果 feed 已有模型，恢复用户选择的值
+  const savedModel = "{{ feed.ai_model if feed and feed.ai_model else '' }}";
+  if (savedModel) {
+    document.getElementById("ai_model").value = savedModel;
+  }
+})();
+</script>
 {% endblock %}
