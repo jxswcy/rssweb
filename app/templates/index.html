@@ -33,7 +33,16 @@
   <div class="card">
     <div class="card-top-bar color-bar-{{ color_idx }}"></div>
     <div class="card-body">
-      <div class="feed-name">{{ feed.name }}</div>
+      <div class="feed-name">
+        {{ feed.name }}
+        {% if feed.feed_type == 'rss_source' %}
+        <span style="display:inline-block;font-size:0.65rem;font-weight:600;
+                     background:#ff9500;color:#fff;border-radius:4px;
+                     padding:0.1rem 0.4rem;margin-left:0.4rem;vertical-align:middle;">
+          RSS
+        </span>
+        {% endif %}
+      </div>
       <div class="feed-url">{{ feed.url }}</div>
       <div class="feed-meta">
         {{ item.article_count }} 篇文章 ·
