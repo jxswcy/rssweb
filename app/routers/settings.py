@@ -9,7 +9,13 @@ from app.models import Setting
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
-SETTING_KEYS = ["openai_api_key", "claude_api_key", "translate_target_lang"]
+SETTING_KEYS = [
+    "openai_api_key",
+    "claude_api_key",
+    "deepseek_api_key",
+    "openrouter_api_key",
+    "translate_target_lang",
+]
 
 
 def _get_settings(db: Session) -> dict:
@@ -26,6 +32,8 @@ async def settings_page(request: Request, db: Session = Depends(get_db)):
             "request": request,
             "openai_key_set": bool(current.get("openai_api_key")),
             "claude_key_set": bool(current.get("claude_api_key")),
+            "deepseek_key_set": bool(current.get("deepseek_api_key")),
+            "openrouter_key_set": bool(current.get("openrouter_api_key")),
             "translate_target_lang": current.get("translate_target_lang", "zh-CN"),
             "saved": False,
         },
@@ -37,6 +45,8 @@ async def save_settings(
     request: Request,
     openai_api_key: str = Form(""),
     claude_api_key: str = Form(""),
+    deepseek_api_key: str = Form(""),
+    openrouter_api_key: str = Form(""),
     translate_target_lang: str = Form("zh-CN"),
     db: Session = Depends(get_db),
 ):
@@ -47,6 +57,10 @@ async def save_settings(
         updates["openai_api_key"] = openai_api_key.strip()
     if claude_api_key.strip():
         updates["claude_api_key"] = claude_api_key.strip()
+    if deepseek_api_key.strip():
+        updates["deepseek_api_key"] = deepseek_api_key.strip()
+    if openrouter_api_key.strip():
+        updates["openrouter_api_key"] = openrouter_api_key.strip()
 
     for key, value in updates.items():
         existing = db.query(Setting).filter(Setting.key == key).first()
@@ -63,6 +77,8 @@ async def save_settings(
             "request": request,
             "openai_key_set": bool(current.get("openai_api_key")),
             "claude_key_set": bool(current.get("claude_api_key")),
+            "deepseek_key_set": bool(current.get("deepseek_api_key")),
+            "openrouter_key_set": bool(current.get("openrouter_api_key")),
             "translate_target_lang": current.get("translate_target_lang", "zh-CN"),
             "saved": True,
         },
