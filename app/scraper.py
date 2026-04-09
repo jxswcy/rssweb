@@ -148,8 +148,8 @@ async def fetch_article_content(
             return str(tag)
         logger.warning("content_selector %r matched nothing for %s, falling back to trafilatura", content_selector, url)
 
-    # 降级：trafilatura 自动提取
-    extracted = trafilatura.extract(html, include_formatting=True)
+    # 降级：trafilatura 自动提取（output_format="html" 保留段落换行结构）
+    extracted = trafilatura.extract(html, output_format="html", include_formatting=True)
     return extracted or ""
 
 

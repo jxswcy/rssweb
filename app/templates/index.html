@@ -43,7 +43,14 @@
         {% else %}
           尚未抓取
         {% endif %}
-        {% if feed.translation_enabled %} · 双语翻译开启{% endif %}
+        {% if feed.translation_enabled %}
+          · 双语翻译开启
+          {% if item.untranslated_count > 0 %}
+            <span style="color:#ff9500;">· {{ item.untranslated_count }} 篇待翻译</span>
+          {% else %}
+            <span style="color:#34c759;">· 已全部翻译</span>
+          {% endif %}
+        {% endif %}
       </div>
       {% if feed.last_error %}
       <div class="feed-error">⚠ {{ feed.last_error }}</div>
@@ -52,8 +59,16 @@
         <a href="/rss/{{ feed.id }}" class="btn btn-rss" target="_blank">订阅链接</a>
         <a href="/feeds/{{ feed.id }}/edit" class="btn btn-secondary">编辑</a>
         <form method="post" action="/feeds/{{ feed.id }}/refresh" style="display:inline">
-          <button type="submit" class="btn btn-secondary">手动刷新</button>
+          <button type="submit" class="btn btn-refresh">手动刷新</button>
         </form>
+        {% if feed.translation_enabled and item.untranslated_count > 0 %}
+        <form method="post" action="/feeds/{{ feed.id }}/retranslate" style="display:inline">
+          <button type="submit" class="btn btn-retranslate"
+            title="对 {{ item.untranslated_count }} 篇未翻译文章补做翻译">
+            补翻译 ({{ item.untranslated_count }})
+          </button>
+        </form>
+        {% endif %}
         <form method="post" action="/feeds/{{ feed.id }}/delete" style="display:inline"
               onsubmit="return confirm('确认删除？')">
           <button type="submit" class="btn btn-danger">删除</button>

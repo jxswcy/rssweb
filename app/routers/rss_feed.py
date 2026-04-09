@@ -15,13 +15,11 @@ async def get_rss(feed_id: int, request: Request, db: Session = Depends(get_db))
     if not feed:
         raise HTTPException(status_code=404, detail="Feed not found")
 
-    articles = (
-        db.query(Article)
-        .filter(Article.feed_id == feed_id)
-        .order_by(Article.fetched_at.desc())
-        .limit(50)
-        .all()
-    )
+    query = db.query(Article).filter(Article.feed_id == feed_id)
+    # 双语翻译开启时，只输出已完成翻译的文章，避免 RSS 客户端将纯原文版本标记为已读
+    if feed.translation_enabled:
+        query = query.filter(Article.content_translated.isnot(None))
+    articles = query.order_by(Article.fetched_at.desc()).limit(50).all()
 
     base_url = str(request.base_url).rstrip("/")
     xml_bytes = generate_rss_feed(feed, articles, base_url=base_url)

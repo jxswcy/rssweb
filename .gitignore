@@ -2,8 +2,13 @@ __pycache__/
 *.pyc
 *.pyo
 .env
-data/*.db
-data/*.db-wal
-data/*.db-shm
+data/
 .pytest_cache/
 .venv/
+
+# 开发辅助文件（不发布）
+CLAUDE.md
+docs/
+
+# 系统文件
+.DS_Store

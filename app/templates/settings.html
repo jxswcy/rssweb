@@ -1,9 +1,21 @@
 {% extends "base.html" %}
-{% block title %}设置 — RSS Web{% endblock %}
+{% block title %}AI 设置 — RSS Web{% endblock %}
+
+{% block extra_style %}
+<style>
+  .api-key-input { font-family: monospace; letter-spacing: 0.04em; }
+  .provider-section { margin-top: 1.2rem; padding-top: 0.8rem; border-top: 1px solid #e5e5ea; }
+  .provider-title { font-size: 0.85rem; font-weight: 600; color: #3a3a3c; margin-bottom: 0.8rem; padding-bottom: 0.4rem; border-bottom: 1px solid #e5e5ea; }
+  .test-btn { font-size: 0.8rem; padding: 0.25rem 0.7rem; }
+  .test-result { margin-top: 0.5rem; min-height: 1.5rem; font-size: 0.85rem; }
+  .test-ok { background: #f0fdf4; border: 1px solid #86efac; border-radius: 6px; padding: 0.5rem 0.8rem; }
+  .test-error { background: #fff1f2; border: 1px solid #fca5a5; border-radius: 6px; padding: 0.5rem 0.8rem; color: #b91c1c; }
+</style>
+{% endblock %}
 
 {% block content %}
 <div style="max-width:520px;margin:0 auto;">
-  <h1 style="font-size:1.5rem;font-weight:700;margin-bottom:1.2rem;">设置</h1>
+  <h1 style="font-size:1.5rem;font-weight:700;margin-bottom:1.2rem;">AI 设置</h1>
 
   {% if saved %}
   <div class="alert alert-success">设置已保存。</div>
@@ -12,43 +24,163 @@
   <form method="post" action="/settings">
     <div class="card">
       <div class="card-body">
+
+        <!-- OpenRouter -->
+        <div class="provider-title">OpenRouter <span style="font-size:0.75rem;color:#86868b;font-weight:400;">（推荐，支持 Gemini / Claude / GPT 等所有主流模型）</span></div>
         <div class="form-group">
-          <label for="openai_api_key">
-            OpenAI API Key
-            {% if openai_key_set %}<span style="color:#34c759;font-size:0.8rem;">（已设置）</span>{% endif %}
-          </label>
-          <input type="password" id="openai_api_key" name="openai_api_key" placeholder="留空则不修改">
+          <label for="openrouter_api_key">API Key</label>
+          <input type="text" id="openrouter_api_key" name="openrouter_api_key"
+            value="{{ openrouter_api_key_masked }}"
+            placeholder="粘贴 API Key"
+            class="api-key-input" autocomplete="off" spellcheck="false">
         </div>
         <div class="form-group">
-          <label for="deepseek_api_key">
-            DeepSeek API Key
-            {% if deepseek_key_set %}<span style="color:#34c759;font-size:0.8rem;">（已设置）</span>{% endif %}
-          </label>
-          <input type="password" id="deepseek_api_key" name="deepseek_api_key" placeholder="留空则不修改">
+          <label for="openrouter_base_url">Base URL <span style="font-size:0.75rem;color:#86868b;font-weight:400;">（留空使用默认 https://openrouter.ai/api/v1）</span></label>
+          <input type="text" id="openrouter_base_url" name="openrouter_base_url"
+            value="{{ openrouter_base_url }}"
+            placeholder="https://openrouter.ai/api/v1">
         </div>
-        <div class="form-group">
-          <label for="openrouter_api_key">
-            OpenRouter API Key
-            {% if openrouter_key_set %}<span style="color:#34c759;font-size:0.8rem;">（已设置）</span>{% endif %}
-          </label>
-          <input type="password" id="openrouter_api_key" name="openrouter_api_key" placeholder="留空则不修改">
+        <div>
+          <button type="button" class="btn btn-secondary test-btn"
+            hx-post="/settings/test-translation"
+            hx-vals='{"provider": "openrouter"}'
+            hx-target="#test-result-openrouter"
+            hx-indicator="#test-spin-openrouter">
+            测试翻译
+          </button>
+          <span id="test-spin-openrouter" class="htmx-indicator" style="font-size:0.8rem;color:#86868b;margin-left:0.4rem;">测试中…</span>
+          <div id="test-result-openrouter" class="test-result"></div>
         </div>
-        <div class="form-group">
-          <label for="claude_api_key">
-            Claude API Key
-            {% if claude_key_set %}<span style="color:#34c759;font-size:0.8rem;">（已设置）</span>{% endif %}
-          </label>
-          <input type="password" id="claude_api_key" name="claude_api_key" placeholder="留空则不修改">
+
+        <!-- OpenAI -->
+        <div class="provider-section">
+          <div class="provider-title">OpenAI</div>
+          <div class="form-group">
+            <label for="openai_api_key">API Key</label>
+            <input type="text" id="openai_api_key" name="openai_api_key"
+              value="{{ openai_api_key_masked }}"
+              placeholder="粘贴 API Key"
+              class="api-key-input" autocomplete="off" spellcheck="false">
+          </div>
+          <div class="form-group">
+            <label for="openai_base_url">Base URL <span style="font-size:0.75rem;color:#86868b;font-weight:400;">（留空使用默认 https://api.openai.com/v1）</span></label>
+            <input type="text" id="openai_base_url" name="openai_base_url"
+              value="{{ openai_base_url }}"
+              placeholder="https://api.openai.com/v1">
+          </div>
+          <div>
+            <button type="button" class="btn btn-secondary test-btn"
+              hx-post="/settings/test-translation"
+              hx-vals='{"provider": "openai"}'
+              hx-target="#test-result-openai"
+              hx-indicator="#test-spin-openai">
+              测试翻译
+            </button>
+            <span id="test-spin-openai" class="htmx-indicator" style="font-size:0.8rem;color:#86868b;margin-left:0.4rem;">测试中…</span>
+            <div id="test-result-openai" class="test-result"></div>
+          </div>
         </div>
-        <div class="form-group">
-          <label for="translate_target_lang">翻译目标语言</label>
-          <select id="translate_target_lang" name="translate_target_lang">
-            <option value="zh-CN" {% if translate_target_lang == 'zh-CN' %}selected{% endif %}>简体中文</option>
-            <option value="zh-TW" {% if translate_target_lang == 'zh-TW' %}selected{% endif %}>繁體中文</option>
-            <option value="ja" {% if translate_target_lang == 'ja' %}selected{% endif %}>日本語</option>
-            <option value="en" {% if translate_target_lang == 'en' %}selected{% endif %}>English</option>
-          </select>
+
+        <!-- Google Gemini -->
+        <div class="provider-section">
+          <div class="provider-title">Google Gemini</div>
+          <div class="form-group">
+            <label for="gemini_api_key">API Key</label>
+            <input type="text" id="gemini_api_key" name="gemini_api_key"
+              value="{{ gemini_api_key_masked }}"
+              placeholder="粘贴 API Key"
+              class="api-key-input" autocomplete="off" spellcheck="false">
+          </div>
+          <div class="form-group">
+            <label for="gemini_base_url">Base URL <span style="font-size:0.75rem;color:#86868b;font-weight:400;">（留空使用默认 https://generativelanguage.googleapis.com/v1beta/openai）</span></label>
+            <input type="text" id="gemini_base_url" name="gemini_base_url"
+              value="{{ gemini_base_url }}"
+              placeholder="https://generativelanguage.googleapis.com/v1beta/openai">
+          </div>
+          <div>
+            <button type="button" class="btn btn-secondary test-btn"
+              hx-post="/settings/test-translation"
+              hx-vals='{"provider": "gemini"}'
+              hx-target="#test-result-gemini"
+              hx-indicator="#test-spin-gemini">
+              测试翻译
+            </button>
+            <span id="test-spin-gemini" class="htmx-indicator" style="font-size:0.8rem;color:#86868b;margin-left:0.4rem;">测试中…</span>
+            <div id="test-result-gemini" class="test-result"></div>
+          </div>
         </div>
+
+        <!-- Anthropic Claude -->
+        <div class="provider-section">
+          <div class="provider-title">Anthropic Claude</div>
+          <div class="form-group">
+            <label for="claude_api_key">API Key</label>
+            <input type="text" id="claude_api_key" name="claude_api_key"
+              value="{{ claude_api_key_masked }}"
+              placeholder="粘贴 API Key"
+              class="api-key-input" autocomplete="off" spellcheck="false">
+          </div>
+          <div class="form-group">
+            <label for="claude_base_url">Base URL <span style="font-size:0.75rem;color:#86868b;font-weight:400;">（自定义代理地址，留空使用官方 API）</span></label>
+            <input type="text" id="claude_base_url" name="claude_base_url"
+              value="{{ claude_base_url }}"
+              placeholder="https://api.anthropic.com">
+          </div>
+          <div>
+            <button type="button" class="btn btn-secondary test-btn"
+              hx-post="/settings/test-translation"
+              hx-vals='{"provider": "claude"}'
+              hx-target="#test-result-claude"
+              hx-indicator="#test-spin-claude">
+              测试翻译
+            </button>
+            <span id="test-spin-claude" class="htmx-indicator" style="font-size:0.8rem;color:#86868b;margin-left:0.4rem;">测试中…</span>
+            <div id="test-result-claude" class="test-result"></div>
+          </div>
+        </div>
+
+        <!-- DeepSeek -->
+        <div class="provider-section">
+          <div class="provider-title">DeepSeek</div>
+          <div class="form-group">
+            <label for="deepseek_api_key">API Key</label>
+            <input type="text" id="deepseek_api_key" name="deepseek_api_key"
+              value="{{ deepseek_api_key_masked }}"
+              placeholder="粘贴 API Key"
+              class="api-key-input" autocomplete="off" spellcheck="false">
+          </div>
+          <div class="form-group">
+            <label for="deepseek_base_url">Base URL <span style="font-size:0.75rem;color:#86868b;font-weight:400;">（留空使用默认 https://api.deepseek.com）</span></label>
+            <input type="text" id="deepseek_base_url" name="deepseek_base_url"
+              value="{{ deepseek_base_url }}"
+              placeholder="https://api.deepseek.com">
+          </div>
+          <div>
+            <button type="button" class="btn btn-secondary test-btn"
+              hx-post="/settings/test-translation"
+              hx-vals='{"provider": "deepseek"}'
+              hx-target="#test-result-deepseek"
+              hx-indicator="#test-spin-deepseek">
+              测试翻译
+            </button>
+            <span id="test-spin-deepseek" class="htmx-indicator" style="font-size:0.8rem;color:#86868b;margin-left:0.4rem;">测试中…</span>
+            <div id="test-result-deepseek" class="test-result"></div>
+          </div>
+        </div>
+
+        <!-- 翻译语言 -->
+        <div style="border-top:1px solid #e5e5ea;padding-top:1rem;margin-top:1.2rem;">
+          <div class="form-group">
+            <label for="translate_target_lang">翻译目标语言</label>
+            <select id="translate_target_lang" name="translate_target_lang">
+              <option value="zh-CN" {% if translate_target_lang == 'zh-CN' %}selected{% endif %}>简体中文</option>
+              <option value="zh-TW" {% if translate_target_lang == 'zh-TW' %}selected{% endif %}>繁體中文</option>
+              <option value="ja" {% if translate_target_lang == 'ja' %}selected{% endif %}>日本語</option>
+              <option value="en" {% if translate_target_lang == 'en' %}selected{% endif %}>English</option>
+            </select>
+          </div>
+        </div>
+
       </div>
     </div>
     <div style="margin-top:1rem;">
@@ -56,4 +188,22 @@
     </div>
   </form>
 </div>
+
+<script>
+document.querySelectorAll('.api-key-input').forEach(input => {
+  const original = input.value;
+  input.addEventListener('focus', () => {
+    if (input.value.includes('\u2022\u2022\u2022\u2022')) {
+      input.value = '';
+      input.dataset.cleared = '1';
+    }
+  });
+  input.addEventListener('blur', () => {
+    if (input.dataset.cleared && !input.value.trim()) {
+      input.value = original;
+      delete input.dataset.cleared;
+    }
+  });
+});
+</script>
 {% endblock %}

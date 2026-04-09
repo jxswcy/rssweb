@@ -13,9 +13,10 @@ class MockFeed:
 
 class MockArticle:
     def __init__(self, id, title, url, content_original, content_translated=None,
-                 fetched_at=None, published_at=None):
+                 title_translated=None, fetched_at=None, published_at=None):
         self.id = id
         self.title = title
+        self.title_translated = title_translated
         self.url = url
         self.content_original = content_original
         self.content_translated = content_translated

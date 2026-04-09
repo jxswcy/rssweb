@@ -42,6 +42,7 @@ class Article(Base):
     id = Column(Integer, primary_key=True, index=True)
     feed_id = Column(Integer, ForeignKey("feeds.id"), nullable=False)
     title = Column(Text, nullable=False)
+    title_translated = Column(Text, nullable=True)
     url = Column(Text, nullable=False)
     content_original = Column(Text, nullable=True)
     content_translated = Column(Text, nullable=True)

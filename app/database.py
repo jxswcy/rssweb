@@ -1,13 +1,23 @@
 import os
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, event, text
 from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.pool import NullPool
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:////data/feeds.db")
 
 engine = create_engine(
     DATABASE_URL,
-    connect_args={"check_same_thread": False},
+    connect_args={"check_same_thread": False, "timeout": 30},
+    poolclass=NullPool,
 )
+
+
+@event.listens_for(engine, "connect")
+def _set_sqlite_pragma(dbapi_conn, _):
+    cursor = dbapi_conn.cursor()
+    cursor.execute("PRAGMA journal_mode=WAL")
+    cursor.execute("PRAGMA busy_timeout=10000")
+    cursor.close()
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -31,6 +41,7 @@ def init_db():
         for ddl in [
             "ALTER TABLE feeds ADD COLUMN ai_model TEXT",
             "ALTER TABLE feeds ADD COLUMN article_selector TEXT",
+            "ALTER TABLE articles ADD COLUMN title_translated TEXT",
         ]:
             try:
                 conn.execute(text(ddl))
