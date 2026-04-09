@@ -51,22 +51,22 @@ async def edit_feed_form(
 async def create_feed(
     name: str = Form(...),
     url: str = Form(...),
-    title_selector: Optional[str] = Form(None),
-    link_selector: Optional[str] = Form(None),
+    article_selector: Optional[str] = Form(None),
     content_selector: Optional[str] = Form(None),
     translation_enabled: bool = Form(False),
     ai_provider: str = Form("openai"),
+    ai_model: Optional[str] = Form(None),
     update_interval: int = Form(60),
     db: Session = Depends(get_db),
 ):
     feed = Feed(
         name=name,
         url=url,
-        title_selector=title_selector or None,
-        link_selector=link_selector or None,
+        article_selector=article_selector or None,
         content_selector=content_selector or None,
         translation_enabled=translation_enabled,
         ai_provider=ai_provider,
+        ai_model=ai_model or None,
         update_interval=update_interval,
     )
     db.add(feed)
@@ -80,8 +80,7 @@ async def create_feed(
 async def preview_feed(
     request: Request,
     url: str = Form(...),
-    title_selector: Optional[str] = Form(None),
-    link_selector: Optional[str] = Form(None),
+    article_selector: Optional[str] = Form(None),
 ):
     """HTMX 预览端点：返回提取到的文章列表 HTML 片段"""
     try:
@@ -89,8 +88,9 @@ async def preview_feed(
         base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
         articles = await fetch_article_list(
             url=url,
-            title_selector=title_selector or None,
-            link_selector=link_selector or None,
+            article_selector=article_selector or None,
+            title_selector=None,
+            link_selector=None,
             base_url=base_url,
         )
         items_html = "".join(
@@ -115,11 +115,11 @@ async def update_feed(
     feed_id: int,
     name: str = Form(...),
     url: str = Form(...),
-    title_selector: Optional[str] = Form(None),
-    link_selector: Optional[str] = Form(None),
+    article_selector: Optional[str] = Form(None),
     content_selector: Optional[str] = Form(None),
     translation_enabled: bool = Form(False),
     ai_provider: str = Form("openai"),
+    ai_model: Optional[str] = Form(None),
     update_interval: int = Form(60),
     db: Session = Depends(get_db),
 ):
@@ -128,11 +128,11 @@ async def update_feed(
         raise HTTPException(status_code=404, detail="Feed not found")
     feed.name = name
     feed.url = url
-    feed.title_selector = title_selector or None
-    feed.link_selector = link_selector or None
+    feed.article_selector = article_selector or None
     feed.content_selector = content_selector or None
     feed.translation_enabled = translation_enabled
     feed.ai_provider = ai_provider
+    feed.ai_model = ai_model or None
     feed.update_interval = update_interval
     db.commit()
     register_feed(feed)
