@@ -1,5 +1,5 @@
 import os
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:////data/feeds.db")
@@ -26,3 +26,14 @@ def get_db():
 def init_db():
     from app import models  # noqa: F401 — ensure models are registered
     Base.metadata.create_all(bind=engine)
+    # 幂等 ALTER TABLE：为已有数据库添加新字段
+    with engine.connect() as conn:
+        for ddl in [
+            "ALTER TABLE feeds ADD COLUMN ai_model TEXT",
+            "ALTER TABLE feeds ADD COLUMN article_selector TEXT",
+        ]:
+            try:
+                conn.execute(text(ddl))
+                conn.commit()
+            except Exception:
+                pass  # 字段已存在则忽略

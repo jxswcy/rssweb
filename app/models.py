@@ -25,6 +25,8 @@ class Feed(Base):
     update_interval = Column(Integer, nullable=False, default=60)
     last_fetched_at = Column(DateTime(timezone=True), nullable=True)
     last_error = Column(Text, nullable=True)
+    ai_model = Column(Text, nullable=True)          # 新增：翻译模型名
+    article_selector = Column(Text, nullable=True)  # 新增：单 selector 模式
     created_at = Column(DateTime(timezone=True), nullable=False, default=_now)
 
     articles = relationship("Article", back_populates="feed",

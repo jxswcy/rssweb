@@ -55,3 +55,19 @@ def test_setting_crud(db):
     db.commit()
     result = db.query(Setting).filter_by(key="openai_api_key").first()
     assert result.value == "sk-test"
+
+def test_feed_has_ai_model_and_article_selector(db):
+    feed = Feed(
+        name="New Feed",
+        url="https://example.com",
+        update_interval=60,
+        translation_enabled=False,
+        ai_provider="openai",
+        ai_model="gpt-4o-mini",
+        article_selector="h3.post-title a",
+    )
+    db.add(feed)
+    db.commit()
+    db.refresh(feed)
+    assert feed.ai_model == "gpt-4o-mini"
+    assert feed.article_selector == "h3.post-title a"
