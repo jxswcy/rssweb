@@ -24,20 +24,18 @@ def start_scheduler():
         for feed in feeds:
             _register_feed_job(feed)
             # 从未抓取或上次抓取时间已超过 update_interval 的，立即补抓
-            if feed.last_fetched_at is None:
+            needs_catchup = (
+                feed.last_fetched_at is None
+                or (datetime.now(timezone.utc) - feed.last_fetched_at) > timedelta(minutes=feed.update_interval)
+            )
+            if needs_catchup:
                 scheduler.add_job(
-                    _run_feed_job, args=[feed.id],
+                    _run_feed_job,
+                    trigger="date",
+                    args=[feed.id],
                     id=f"feed_{feed.id}_catchup",
                     replace_existing=True,
                 )
-            else:
-                elapsed = datetime.now(timezone.utc) - feed.last_fetched_at
-                if elapsed > timedelta(minutes=feed.update_interval):
-                    scheduler.add_job(
-                        _run_feed_job, args=[feed.id],
-                        id=f"feed_{feed.id}_catchup",
-                        replace_existing=True,
-                    )
     finally:
         db.close()
 
@@ -50,8 +48,6 @@ def stop_scheduler():
 def _register_feed_job(feed: Feed):
     """为指定 Feed 注册/更新定时任务"""
     job_id = f"feed_{feed.id}"
-    if scheduler.get_job(job_id):
-        scheduler.remove_job(job_id)
     scheduler.add_job(
         _run_feed_job,
         trigger="interval",
@@ -91,7 +87,10 @@ async def _run_feed_job(feed_id: int):
     except Exception as exc:
         logger.error("Feed %d job failed: %s", feed_id, exc)
         db.rollback()
-        _update_feed_error(db, feed_id, str(exc))
+        try:
+            _update_feed_error(db, feed_id, str(exc))
+        except Exception as write_exc:
+            logger.error("Failed to write error status for feed %d: %s", feed_id, write_exc)
     finally:
         db.close()
 
@@ -116,6 +115,7 @@ async def _fetch_and_store(feed: Feed, db: Session):
 
     if not new_stubs:
         _update_feed_fetched(db, feed.id)
+        db.commit()
         return
 
     # 并发抓取正文
@@ -164,7 +164,7 @@ def _update_feed_fetched(db: Session, feed_id: int):
     db.query(Feed).filter(Feed.id == feed_id).update(
         {"last_fetched_at": datetime.now(timezone.utc), "last_error": None}
     )
-    db.commit()
+    # commit 由调用方负责
 
 
 def _update_feed_error(db: Session, feed_id: int, error: str):
