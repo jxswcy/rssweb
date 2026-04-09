@@ -10,7 +10,7 @@ from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 
 from app.database import SessionLocal
 from app.models import Feed, Article
-from app.scraper import fetch_article_list, fetch_articles_concurrently
+from app.scraper import fetch_article_list, fetch_articles_concurrently, parse_rss_feed
 from app.translator import translate_text
 
 logger = logging.getLogger(__name__)
@@ -217,6 +217,7 @@ async def _fetch_and_store(feed_id: int):
         trans_enabled = feed.translation_enabled
         ai_provider   = feed.ai_provider
         ai_model      = feed.ai_model
+        feed_type     = feed.feed_type  # 新增：读取 feed 类型
 
         existing_urls = {
             row[0] for row in db.query(Article.url).filter(Article.feed_id == feed_id_).all()
@@ -238,14 +239,17 @@ async def _fetch_and_store(feed_id: int):
         db.close()  # ← 读完即关，不持有 session 做 I/O
 
     # ── 阶段 2：网络抓取 + AI 翻译（纯 async I/O，不持有 DB）──────────────
-    base_url = f"{urlparse(feed_url).scheme}://{urlparse(feed_url).netloc}"
-    stubs = await fetch_article_list(
-        url=feed_url,
-        article_selector=article_sel,
-        title_selector=title_sel,
-        link_selector=link_sel,
-        base_url=base_url,
-    )
+    if feed_type == "rss_source":
+        stubs = await parse_rss_feed(feed_url)
+    else:
+        base_url = f"{urlparse(feed_url).scheme}://{urlparse(feed_url).netloc}"
+        stubs = await fetch_article_list(
+            url=feed_url,
+            article_selector=article_sel,
+            title_selector=title_sel,
+            link_selector=link_sel,
+            base_url=base_url,
+        )
     new_stubs = [s for s in stubs if s["url"] not in existing_urls]
 
     if not new_stubs:
@@ -305,6 +309,7 @@ async def _fetch_and_store(feed_id: int):
                 url=data["url"],
                 content_original=content_original,
                 content_translated=content_translated,
+                published_at=data.get("published_at"),  # 新增：rss_source 类型携带此字段
             ).on_conflict_do_nothing(index_elements=["feed_id", "url"])
             db.execute(stmt)
             db.commit()
