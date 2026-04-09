@@ -129,24 +129,32 @@ async def translate_text(
 
     # Google 免费翻译：无需 API Key，直接调用公开端点
     if provider == "google_free":
-        chunks = split_text(text)
-        translated_chunks = []
-        for chunk in chunks:
-            try:
-                # Google 免费 API 不支持 HTML，先提取纯文本段落翻译再拼回
-                soup = BeautifulSoup(chunk, "html.parser")
-                for tag in soup.find_all(True):
-                    if tag.string and tag.string.strip():
-                        try:
-                            translated = await _translate_text_google_free(tag.string.strip(), target_lang)
-                            tag.string.replace_with(translated)
-                        except Exception:
-                            pass  # 单标签失败不影响整体
-                translated_chunks.append(str(soup))
-            except Exception as exc:
-                logger.error("google_free translation failed: %s", exc, exc_info=True)
-                return text
-        return "".join(translated_chunks)
+        try:
+            soup = BeautifulSoup(text, "html.parser")
+            paras = soup.find_all("p")
+            if paras:
+                # 有段落结构：逐 <p> 翻译，保留原标签属性，内容替换为译文
+                for p in paras:
+                    plain = p.get_text(separator=" ").strip()
+                    if not plain:
+                        continue
+                    try:
+                        translated_text = await _translate_text_google_free(plain, target_lang)
+                        p.clear()
+                        p.append(translated_text)
+                    except Exception as exc:
+                        logger.warning("google_free: failed to translate paragraph: %s", exc)
+                return str(soup)
+            else:
+                # 无段落结构：整块纯文本翻译
+                plain = soup.get_text(separator="\n").strip()
+                if not plain:
+                    return text
+                translated_text = await _translate_text_google_free(plain, target_lang)
+                return f"<p>{translated_text}</p>"
+        except Exception as exc:
+            logger.error("google_free translation failed: %s", exc, exc_info=True)
+            return text
 
     resolved_model = model or PROVIDER_DEFAULT_MODELS.get(provider, "gpt-4o-mini")
 
