@@ -51,7 +51,10 @@ def client():
         # app.main 必须在 patch() 块内部 import，确保 scheduler mock 在
         # FastAPI lifespan 绑定 start_scheduler/stop_scheduler 之前生效
         from app.main import app
+        from app.routers.auth import require_login
         app.dependency_overrides[get_db] = override_get_db
+        # 绕过登录验证，测试环境无需 session cookie
+        app.dependency_overrides[require_login] = lambda: None
         with TestClient(app, raise_server_exceptions=True) as c:
             yield c
         app.dependency_overrides.clear()

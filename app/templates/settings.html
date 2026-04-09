@@ -187,6 +187,35 @@
       <button type="submit" class="btn btn-primary">保存设置</button>
     </div>
   </form>
+
+  <div class="card" style="margin-top:1.2rem;">
+    <div class="card-body">
+      <div style="font-size:1rem;font-weight:600;margin-bottom:1rem;">修改登录密码</div>
+      {% if password_error %}
+      <div class="alert alert-error" style="margin-bottom:0.8rem;">{{ password_error }}</div>
+      {% endif %}
+      {% if password_saved %}
+      <div class="alert alert-success" style="margin-bottom:0.8rem;">密码已修改。</div>
+      {% endif %}
+      <form method="post" action="/settings/change-password">
+        <div class="form-group">
+          <label for="new_password">新密码</label>
+          <input type="password" id="new_password" name="new_password" placeholder="输入新密码">
+        </div>
+        <div class="form-group">
+          <label for="confirm_password">确认新密码</label>
+          <input type="password" id="confirm_password" name="confirm_password" placeholder="再次输入新密码">
+        </div>
+        <button type="submit" class="btn btn-primary">修改密码</button>
+      </form>
+    </div>
+  </div>
+
+  <div style="margin-top:1rem;text-align:right;">
+    <form method="post" action="/logout" style="display:inline;">
+      <button type="submit" class="btn btn-secondary">登出</button>
+    </form>
+  </div>
 </div>
 
 <script>

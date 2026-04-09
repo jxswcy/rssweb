@@ -4,11 +4,15 @@ import traceback
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import Setting
+from app.routers.auth import require_login
 from app.translator import translate_text, PROVIDER_DEFAULT_MODELS
+
+_pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -43,7 +47,7 @@ def _mask_key(key: str | None) -> str:
 
 
 @router.get("/settings", response_class=HTMLResponse)
-async def settings_page(request: Request, db: Session = Depends(get_db)):
+async def settings_page(request: Request, db: Session = Depends(get_db), _: None = Depends(require_login)):
     current = _get_settings(db)
     return templates.TemplateResponse(
         "settings.html",
@@ -61,6 +65,8 @@ async def settings_page(request: Request, db: Session = Depends(get_db)):
             "claude_base_url": current.get("claude_base_url", ""),
             "gemini_base_url": current.get("gemini_base_url", ""),
             "saved": False,
+            "password_error": None,
+            "password_saved": False,
         },
     )
 
@@ -80,6 +86,7 @@ async def save_settings(
     claude_base_url: str = Form(""),
     gemini_base_url: str = Form(""),
     db: Session = Depends(get_db),
+    _: None = Depends(require_login),
 ):
     updates = {}
     if translate_target_lang.strip():
@@ -130,6 +137,8 @@ async def save_settings(
             "claude_base_url": current.get("claude_base_url", ""),
             "gemini_base_url": current.get("gemini_base_url", ""),
             "saved": True,
+            "password_error": None,
+            "password_saved": False,
         },
     )
 
@@ -138,6 +147,7 @@ async def save_settings(
 async def test_translation(
     provider: str = Form(...),
     db: Session = Depends(get_db),
+    _: None = Depends(require_login),
 ):
     """HTMX 翻译测试：用当前保存的 key 和 base_url 翻译一句话，返回结果或详细错误"""
     current = _get_settings(db)
@@ -180,3 +190,52 @@ async def test_translation(
             f'<pre style="font-size:0.72rem;color:#86868b;white-space:pre-wrap;margin-top:0.5rem;">{detail}</pre>'
             f'</div>'
         )
+
+
+@router.post("/settings/change-password", response_class=HTMLResponse)
+async def change_password(
+    request: Request,
+    new_password: str = Form(""),
+    confirm_password: str = Form(""),
+    db: Session = Depends(get_db),
+    _: None = Depends(require_login),
+):
+    current = _get_settings(db)
+    password_error = None
+    password_saved = False
+
+    if not new_password.strip():
+        password_error = "新密码不能为空"
+    elif new_password.strip() != confirm_password.strip():
+        password_error = "两次输入的密码不一致"
+    else:
+        new_hash = _pwd_context.hash(new_password.strip())
+        from app.models import Setting as SettingModel
+        existing_pwd = db.query(SettingModel).filter(SettingModel.key == "admin_password_hash").first()
+        if existing_pwd:
+            existing_pwd.value = new_hash
+        else:
+            db.add(SettingModel(key="admin_password_hash", value=new_hash))
+        db.commit()
+        password_saved = True
+
+    return templates.TemplateResponse(
+        "settings.html",
+        {
+            "request": request,
+            "openai_api_key_masked": _mask_key(current.get("openai_api_key")),
+            "claude_api_key_masked": _mask_key(current.get("claude_api_key")),
+            "deepseek_api_key_masked": _mask_key(current.get("deepseek_api_key")),
+            "openrouter_api_key_masked": _mask_key(current.get("openrouter_api_key")),
+            "gemini_api_key_masked": _mask_key(current.get("gemini_api_key")),
+            "translate_target_lang": current.get("translate_target_lang", "zh-CN"),
+            "openai_base_url": current.get("openai_base_url", ""),
+            "deepseek_base_url": current.get("deepseek_base_url", ""),
+            "openrouter_base_url": current.get("openrouter_base_url", ""),
+            "claude_base_url": current.get("claude_base_url", ""),
+            "gemini_base_url": current.get("gemini_base_url", ""),
+            "saved": False,
+            "password_error": password_error,
+            "password_saved": password_saved,
+        },
+    )

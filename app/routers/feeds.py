@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import Article, Feed
+from app.routers.auth import require_login
 from app.scheduler import register_feed, remove_feed_job, run_feed_now, retranslate_feed
 from app.scraper import fetch_article_list, fetch_article_content
 
@@ -18,7 +19,7 @@ templates = Jinja2Templates(directory="app/templates")
 
 
 @router.get("/", response_class=HTMLResponse)
-async def index(request: Request, db: Session = Depends(get_db)):
+async def index(request: Request, db: Session = Depends(get_db), _: None = Depends(require_login)):
     feeds = db.query(Feed).order_by(Feed.created_at.desc()).all()
     feed_stats = []
     for feed in feeds:
@@ -40,7 +41,7 @@ async def index(request: Request, db: Session = Depends(get_db)):
 
 
 @router.get("/feeds/new", response_class=HTMLResponse)
-async def new_feed_form(request: Request):
+async def new_feed_form(request: Request, _: None = Depends(require_login)):
     return templates.TemplateResponse(
         "feed_form.html", {"request": request, "feed": None, "error": None}
     )
@@ -48,7 +49,7 @@ async def new_feed_form(request: Request):
 
 @router.get("/feeds/{feed_id}/edit", response_class=HTMLResponse)
 async def edit_feed_form(
-    feed_id: int, request: Request, db: Session = Depends(get_db)
+    feed_id: int, request: Request, db: Session = Depends(get_db), _: None = Depends(require_login)
 ):
     feed = db.query(Feed).filter(Feed.id == feed_id).first()
     if not feed:
@@ -70,6 +71,7 @@ async def create_feed(
     update_interval: int = Form(60),
     feed_type: str = Form("webpage"),
     db: Session = Depends(get_db),
+    _: None = Depends(require_login),
 ):
     feed = Feed(
         name=name,
@@ -94,6 +96,7 @@ async def preview_feed(
     request: Request,
     url: str = Form(...),
     article_selector: Optional[str] = Form(None),
+    _: None = Depends(require_login),
 ):
     """HTMX 预览端点：返回提取到的文章列表 HTML 片段"""
     try:
@@ -127,6 +130,7 @@ async def preview_feed(
 async def preview_content(
     article_url: str = Form(...),
     content_selector: Optional[str] = Form(None),
+    _: None = Depends(require_login),
 ):
     """HTMX 正文预览端点：抓取指定 URL 的正文并返回 HTML 片段"""
     try:
@@ -163,6 +167,7 @@ async def update_feed(
     update_interval: int = Form(60),
     feed_type: str = Form("webpage"),
     db: Session = Depends(get_db),
+    _: None = Depends(require_login),
 ):
     feed = db.query(Feed).filter(Feed.id == feed_id).first()
     if not feed:
@@ -182,7 +187,7 @@ async def update_feed(
 
 
 @router.post("/feeds/{feed_id}/delete", response_class=RedirectResponse)
-async def delete_feed(feed_id: int, db: Session = Depends(get_db)):
+async def delete_feed(feed_id: int, db: Session = Depends(get_db), _: None = Depends(require_login)):
     feed = db.query(Feed).filter(Feed.id == feed_id).first()
     if not feed:
         raise HTTPException(status_code=404, detail="Feed not found")
@@ -193,7 +198,7 @@ async def delete_feed(feed_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/feeds/{feed_id}/refresh", response_class=RedirectResponse)
-async def refresh_feed(feed_id: int, db: Session = Depends(get_db)):
+async def refresh_feed(feed_id: int, db: Session = Depends(get_db), _: None = Depends(require_login)):
     feed = db.query(Feed).filter(Feed.id == feed_id).first()
     if not feed:
         raise HTTPException(status_code=404, detail="Feed not found")
@@ -202,7 +207,7 @@ async def refresh_feed(feed_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/feeds/{feed_id}/retranslate", response_class=RedirectResponse)
-async def retranslate(feed_id: int, db: Session = Depends(get_db)):
+async def retranslate(feed_id: int, db: Session = Depends(get_db), _: None = Depends(require_login)):
     feed = db.query(Feed).filter(Feed.id == feed_id).first()
     if not feed:
         raise HTTPException(status_code=404, detail="Feed not found")
