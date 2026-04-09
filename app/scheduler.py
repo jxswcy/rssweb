@@ -102,6 +102,7 @@ async def _fetch_and_store(feed: Feed, db: Session):
     # 获取文章列表
     stubs = await fetch_article_list(
         url=feed.url,
+        article_selector=feed.article_selector,
         title_selector=feed.title_selector,
         link_selector=feed.link_selector,
         base_url=base_url,
@@ -137,6 +138,7 @@ async def _fetch_and_store(feed: Feed, db: Session):
                 text=content_original,
                 provider=feed.ai_provider,
                 api_key=api_key,
+                model=feed.ai_model or None,
                 target_lang=translate_lang,
             )
 
