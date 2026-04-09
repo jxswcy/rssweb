@@ -184,3 +184,26 @@ def test_delete_feed(client):
     response = client.post(f"/feeds/{feed_id}/delete", follow_redirects=True)
     assert response.status_code == 200
     assert "To Delete" not in response.text
+
+
+def test_save_deepseek_api_key(client):
+    response = client.post(
+        "/settings",
+        data={"deepseek_api_key": "sk-deepseek-test", "translate_target_lang": "zh-CN"},
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    assert "设置已保存" in response.text
+
+
+def test_settings_shows_deepseek_key_set(client):
+    # 先写入 key
+    client.post(
+        "/settings",
+        data={"deepseek_api_key": "sk-deepseek-test", "translate_target_lang": "zh-CN"},
+        follow_redirects=True,
+    )
+    response = client.get("/settings")
+    assert response.status_code == 200
+    # 模板中 deepseek_key_set=True 时显示「已设置」
+    assert "DeepSeek" in response.text
