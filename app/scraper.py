@@ -1,5 +1,8 @@
 import asyncio
 import logging
+import xml.etree.ElementTree as ET
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 from urllib.parse import urljoin, urlparse
 from typing import Optional
 
@@ -172,3 +175,70 @@ async def fetch_articles_concurrently(
     tasks = [_fetch_one(s) for s in article_stubs]
     results = await asyncio.gather(*tasks)
     return list(results)
+
+
+async def parse_rss_feed(url: str) -> list[dict]:
+    """解析标准 RSS 2.0 / Atom 源，返回 [{"title": str, "url": str, "published_at": datetime | None}, ...]"""
+    async with httpx.AsyncClient(headers=HEADERS, timeout=30, follow_redirects=True) as client:
+        response = await client.get(url)
+        response.raise_for_status()
+        xml_text = response.text
+
+    root = ET.fromstring(xml_text)
+    ns_atom = "http://www.w3.org/2005/Atom"
+
+    if root.tag == "rss" or root.tag.lower() == "rss":
+        # RSS 2.0
+        items = root.findall("channel/item")
+        results = []
+        for item in items:
+            title_el = item.find("title")
+            link_el = item.find("link")
+            pub_el = item.find("pubDate")
+
+            title = title_el.text.strip() if title_el is not None and title_el.text else ""
+            url_str = link_el.text.strip() if link_el is not None and link_el.text else ""
+            if not url_str:
+                continue
+
+            published_at = None
+            if pub_el is not None and pub_el.text:
+                try:
+                    published_at = parsedate_to_datetime(pub_el.text.strip())
+                    if published_at.tzinfo is None:
+                        published_at = published_at.replace(tzinfo=timezone.utc)
+                except Exception:
+                    published_at = None
+
+            results.append({"title": title, "url": url_str, "published_at": published_at})
+        return results
+
+    elif root.tag == f"{{{ns_atom}}}feed" or root.tag == "feed":
+        # Atom：兼容带命名空间和不带命名空间
+        ns = f"{{{ns_atom}}}" if root.tag.startswith("{") else ""
+        entries = root.findall(f"{ns}entry")
+        results = []
+        for entry in entries:
+            title_el = entry.find(f"{ns}title")
+            link_el = entry.find(f"{ns}link")
+            updated_el = entry.find(f"{ns}updated")
+
+            title = title_el.text.strip() if title_el is not None and title_el.text else ""
+            url_str = link_el.get("href", "").strip() if link_el is not None else ""
+            if not url_str:
+                continue
+
+            published_at = None
+            if updated_el is not None and updated_el.text:
+                try:
+                    published_at = datetime.fromisoformat(
+                        updated_el.text.strip().replace("Z", "+00:00")
+                    )
+                except Exception:
+                    published_at = None
+
+            results.append({"title": title, "url": url_str, "published_at": published_at})
+        return results
+
+    else:
+        raise ValueError(f"Unsupported feed format: root tag is {root.tag!r}")

@@ -229,3 +229,107 @@ async def test_article_selector_longest_anchor():
     assert len(articles) == 2
     assert articles[0]["title"] == "Long Article Title Here"
     assert articles[0]["url"] == "https://example.com/post/1"
+
+
+from app.scraper import parse_rss_feed
+
+SAMPLE_RSS2_XML = """<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Test Blog</title>
+    <item>
+      <title>Article One</title>
+      <link>https://example.com/post/1</link>
+      <pubDate>Mon, 01 Jan 2024 00:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Article Two</title>
+      <link>https://example.com/post/2</link>
+      <pubDate>Tue, 02 Jan 2024 00:00:00 +0000</pubDate>
+    </item>
+  </channel>
+</rss>"""
+
+SAMPLE_ATOM_XML = """<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Test Blog</title>
+  <entry>
+    <title>Atom Article One</title>
+    <link href="https://example.com/atom/1"/>
+    <updated>2024-01-01T00:00:00Z</updated>
+  </entry>
+  <entry>
+    <title>Atom Article Two</title>
+    <link href="https://example.com/atom/2"/>
+    <updated>2024-01-02T00:00:00Z</updated>
+  </entry>
+</feed>"""
+
+SAMPLE_RSS2_MISSING_LINK_XML = """<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <item>
+      <title>Valid Article</title>
+      <link>https://example.com/post/1</link>
+    </item>
+    <item>
+      <title>No Link Article</title>
+    </item>
+  </channel>
+</rss>"""
+
+
+@pytest.mark.asyncio
+async def test_parse_rss_feed_rss2():
+    """RSS 2.0 格式：正确解析标题、链接、pubDate"""
+    with patch("app.scraper.httpx.AsyncClient") as MockClient:
+        mock_response = MagicMock()
+        mock_response.text = SAMPLE_RSS2_XML
+        mock_response.raise_for_status = MagicMock()
+        MockClient.return_value.__aenter__ = AsyncMock(return_value=MockClient.return_value)
+        MockClient.return_value.__aexit__ = AsyncMock(return_value=False)
+        MockClient.return_value.get = AsyncMock(return_value=mock_response)
+
+        items = await parse_rss_feed("https://example.com/feed.rss")
+
+    assert len(items) == 2
+    assert items[0]["title"] == "Article One"
+    assert items[0]["url"] == "https://example.com/post/1"
+    assert items[0]["published_at"] is not None
+    assert items[1]["title"] == "Article Two"
+
+
+@pytest.mark.asyncio
+async def test_parse_rss_feed_atom():
+    """Atom 格式：正确解析标题、href 链接、updated 时间"""
+    with patch("app.scraper.httpx.AsyncClient") as MockClient:
+        mock_response = MagicMock()
+        mock_response.text = SAMPLE_ATOM_XML
+        mock_response.raise_for_status = MagicMock()
+        MockClient.return_value.__aenter__ = AsyncMock(return_value=MockClient.return_value)
+        MockClient.return_value.__aexit__ = AsyncMock(return_value=False)
+        MockClient.return_value.get = AsyncMock(return_value=mock_response)
+
+        items = await parse_rss_feed("https://example.com/feed.atom")
+
+    assert len(items) == 2
+    assert items[0]["title"] == "Atom Article One"
+    assert items[0]["url"] == "https://example.com/atom/1"
+    assert items[0]["published_at"] is not None
+
+
+@pytest.mark.asyncio
+async def test_parse_rss_feed_missing_link():
+    """缺少 <link> 的 item 被过滤掉"""
+    with patch("app.scraper.httpx.AsyncClient") as MockClient:
+        mock_response = MagicMock()
+        mock_response.text = SAMPLE_RSS2_MISSING_LINK_XML
+        mock_response.raise_for_status = MagicMock()
+        MockClient.return_value.__aenter__ = AsyncMock(return_value=MockClient.return_value)
+        MockClient.return_value.__aexit__ = AsyncMock(return_value=False)
+        MockClient.return_value.get = AsyncMock(return_value=mock_response)
+
+        items = await parse_rss_feed("https://example.com/feed.rss")
+
+    assert len(items) == 1
+    assert items[0]["title"] == "Valid Article"
