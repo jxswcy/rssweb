@@ -191,6 +191,7 @@ async def parse_rss_feed(url: str) -> list[dict]:
         # RSS 2.0
         items = root.findall("channel/item")
         results = []
+        seen: set[str] = set()
         for item in items:
             title_el = item.find("title")
             link_el = item.find("link")
@@ -200,6 +201,9 @@ async def parse_rss_feed(url: str) -> list[dict]:
             url_str = link_el.text.strip() if link_el is not None and link_el.text else ""
             if not url_str:
                 continue
+            if url_str in seen:
+                continue
+            seen.add(url_str)
 
             published_at = None
             if pub_el is not None and pub_el.text:
@@ -208,6 +212,7 @@ async def parse_rss_feed(url: str) -> list[dict]:
                     if published_at.tzinfo is None:
                         published_at = published_at.replace(tzinfo=timezone.utc)
                 except Exception:
+                    logger.warning("parse_rss_feed: failed to parse pubDate %r for %s", pub_el.text, url)
                     published_at = None
 
             results.append({"title": title, "url": url_str, "published_at": published_at})
@@ -218,6 +223,7 @@ async def parse_rss_feed(url: str) -> list[dict]:
         ns = f"{{{ns_atom}}}" if root.tag.startswith("{") else ""
         entries = root.findall(f"{ns}entry")
         results = []
+        seen: set[str] = set()
         for entry in entries:
             title_el = entry.find(f"{ns}title")
             link_el = entry.find(f"{ns}link")
@@ -227,6 +233,9 @@ async def parse_rss_feed(url: str) -> list[dict]:
             url_str = link_el.get("href", "").strip() if link_el is not None else ""
             if not url_str:
                 continue
+            if url_str in seen:
+                continue
+            seen.add(url_str)
 
             published_at = None
             if updated_el is not None and updated_el.text:
@@ -235,6 +244,7 @@ async def parse_rss_feed(url: str) -> list[dict]:
                         updated_el.text.strip().replace("Z", "+00:00")
                     )
                 except Exception:
+                    logger.warning("parse_rss_feed: failed to parse updated %r for %s", updated_el.text, url)
                     published_at = None
 
             results.append({"title": title, "url": url_str, "published_at": published_at})
