@@ -88,16 +88,17 @@
           <div class="hint">留空则自动启发式识别。粘贴两个示例后会自动推导并填入此处。</div>
         </div>
 
+        </div>
+
         <button type="button" class="btn btn-secondary"
           hx-post="/feeds/preview"
-          hx-include="#url,#article_selector"
+          hx-include="#url,#article_selector,input[name='feed_type']:checked"
           hx-target="#preview-box"
           hx-indicator="#preview-spinner">
           预览文章列表
         </button>
         <span id="preview-spinner" class="htmx-indicator" style="font-size:0.85rem;color:#86868b;margin-left:0.5rem;">加载中…</span>
         <div id="preview-box" class="preview-box"></div>
-        </div>
 
         <div class="section-title">正文抓取</div>
         <div class="form-group">

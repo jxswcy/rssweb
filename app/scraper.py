@@ -199,6 +199,13 @@ async def parse_rss_feed(url: str) -> list[dict]:
 
             title = title_el.text.strip() if title_el is not None and title_el.text else ""
             url_str = link_el.text.strip() if link_el is not None and link_el.text else ""
+            # <link> 为空时回退到 <guid>（许多 feed 如 9to5mac 用 guid 作为文章链接）
+            if not url_str:
+                guid_el = item.find("guid")
+                if guid_el is not None and guid_el.text:
+                    candidate = guid_el.text.strip()
+                    if candidate.startswith("http"):
+                        url_str = candidate
             if not url_str:
                 continue
             if url_str in seen:

@@ -333,3 +333,32 @@ async def test_parse_rss_feed_missing_link():
 
     assert len(items) == 1
     assert items[0]["title"] == "Valid Article"
+
+
+SAMPLE_RSS2_GUID_AS_LINK_XML = """<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <item>
+      <title>Article With Guid</title>
+      <guid isPermaLink="false">https://example.com/?p=1234</guid>
+    </item>
+  </channel>
+</rss>"""
+
+
+@pytest.mark.asyncio
+async def test_parse_rss_feed_guid_fallback():
+    """<link> 缺失时回退到 <guid> URL"""
+    with patch("app.scraper.httpx.AsyncClient") as MockClient:
+        mock_response = MagicMock()
+        mock_response.text = SAMPLE_RSS2_GUID_AS_LINK_XML
+        mock_response.raise_for_status = MagicMock()
+        MockClient.return_value.__aenter__ = AsyncMock(return_value=MockClient.return_value)
+        MockClient.return_value.__aexit__ = AsyncMock(return_value=False)
+        MockClient.return_value.get = AsyncMock(return_value=mock_response)
+
+        items = await parse_rss_feed("https://example.com/feed.rss")
+
+    assert len(items) == 1
+    assert items[0]["title"] == "Article With Guid"
+    assert items[0]["url"] == "https://example.com/?p=1234"

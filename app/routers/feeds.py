@@ -12,7 +12,7 @@ from app.database import get_db
 from app.models import Article, Feed
 from app.routers.auth import require_login
 from app.scheduler import register_feed, remove_feed_job, run_feed_now, retranslate_feed
-from app.scraper import fetch_article_list, fetch_article_content
+from app.scraper import fetch_article_list, fetch_article_content, parse_rss_feed
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -96,19 +96,23 @@ async def preview_feed(
     request: Request,
     url: str = Form(...),
     article_selector: Optional[str] = Form(None),
+    feed_type: str = Form("webpage"),
     _: None = Depends(require_login),
 ):
     """HTMX 预览端点：返回提取到的文章列表 HTML 片段"""
     try:
-        parsed_url = urlparse(url)
-        base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
-        articles = await fetch_article_list(
-            url=url,
-            article_selector=article_selector or None,
-            title_selector=None,
-            link_selector=None,
-            base_url=base_url,
-        )
+        if feed_type == "rss_source":
+            articles = await parse_rss_feed(url)
+        else:
+            parsed_url = urlparse(url)
+            base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
+            articles = await fetch_article_list(
+                url=url,
+                article_selector=article_selector or None,
+                title_selector=None,
+                link_selector=None,
+                base_url=base_url,
+            )
         items_html = "".join(
             f'<li><a href="{html.escape(a["url"], quote=True)}" target="_blank">'
             f'{html.escape(a["title"])}</a></li>'
