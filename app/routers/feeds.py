@@ -1,10 +1,12 @@
 import asyncio
 import html
+import json
 from typing import Optional
 from urllib.parse import urlparse
+from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import APIRouter, Depends, Form, HTTPException, Request, UploadFile, File
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
@@ -217,5 +219,85 @@ async def retranslate(feed_id: int, db: Session = Depends(get_db), _: None = Dep
         raise HTTPException(status_code=404, detail="Feed not found")
     asyncio.create_task(retranslate_feed(feed_id))  # 后台执行，立即返回
     return RedirectResponse(url="/", status_code=303)
+
+
+# ── 导入导出 ───────────────────────────────────────────────────────────────
+
+@router.get("/feeds/export")
+async def export_feeds(db: Session = Depends(get_db), _: None = Depends(require_login)):
+    """导出所有订阅为 JSON 文件"""
+    feeds = db.query(Feed).all()
+    data = {
+        "exported_at": datetime.now(timezone.utc).isoformat(),
+        "feeds": [
+            {
+                "name": f.name,
+                "url": f.url,
+                "feed_type": f.feed_type,
+                "article_selector": f.article_selector,
+                "content_selector": f.content_selector,
+                "translation_enabled": f.translation_enabled,
+                "ai_provider": f.ai_provider,
+                "ai_model": f.ai_model,
+                "update_interval": f.update_interval,
+            }
+            for f in feeds
+        ]
+    }
+    return JSONResponse(
+        content=data,
+        headers={"Content-Disposition": "attachment; filename=rssweb_feeds.json"}
+    )
+
+
+@router.get("/feeds/import", response_class=HTMLResponse)
+async def import_feeds_page(request: Request, _: None = Depends(require_login)):
+    """导入订阅页面"""
+    return templates.TemplateResponse("import.html", {"request": request})
+
+
+@router.post("/feeds/import", response_class=HTMLResponse)
+async def import_feeds(
+    request: Request,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    _: None = Depends(require_login),
+):
+    """处理导入文件，批量创建 Feed"""
+    imported = 0
+    errors = []
+    try:
+        content = await file.read()
+        data = json.loads(content)
+        feeds = data.get("feeds", [])
+        for item in feeds:
+            try:
+                feed = Feed(
+                    name=item.get("name", "未命名"),
+                    url=item.get("url", ""),
+                    feed_type=item.get("feed_type", "webpage"),
+                    article_selector=item.get("article_selector"),
+                    content_selector=item.get("content_selector"),
+                    translation_enabled=item.get("translation_enabled", False),
+                    ai_provider=item.get("ai_provider", "openrouter"),
+                    ai_model=item.get("ai_model"),
+                    update_interval=item.get("update_interval", 60),
+                )
+                db.add(feed)
+                db.flush()  # 获取 id
+                register_feed(feed, run_immediately=False)
+                imported += 1
+            except Exception as e:
+                errors.append(f"{item.get('name', '?')}: {e}")
+        db.commit()
+    except json.JSONDecodeError:
+        errors.append("文件格式错误，需要 JSON 格式")
+    except Exception as e:
+        errors.append(str(e))
+
+    return templates.TemplateResponse(
+        "import.html",
+        {"request": request, "imported": imported, "errors": errors},
+    )
 
 

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}版本信息 — RSS Web{% endblock %}
+
+{% block content %}
+<div style="max-width:640px;margin:0 auto;">
+  <h1 style="font-size:1.5rem;font-weight:700;margin-bottom:1.2rem;">版本信息</h1>
+
+  <div class="card">
+    <div class="card-body">
+      <div style="font-size:0.85rem;color:#86868b;margin-bottom:0.5rem;">当前版本</div>
+      <div style="font-size:1.2rem;font-weight:600;margin-bottom:1.5rem;">v1.1.0</div>
+
+      <div style="font-size:0.85rem;font-weight:600;color:#3a3a3c;margin-bottom:0.8rem;">功能更新</div>
+      <ul style="font-size:0.9rem;line-height:1.8;margin-bottom:1.5rem;padding-left:1.2rem;">
+        <li>新增「RSS 源」订阅类型，支持直接订阅标准 RSS/Atom 源</li>
+        <li>新增 Google 翻译（免费）提供方，无需 API Key</li>
+        <li>新增管理界面登录认证，默认密码 admin</li>
+        <li>新增订阅导入导出功能（JSON 格式）</li>
+        <li>新增版本信息页面</li>
+        <li>优化：RSS 源支持 &lt;guid&gt; 作为文章链接</li>
+        <li>优化：RSS 源支持文章预览</li>
+        <li>优化：翻译设置页面布局调整</li>
+      </ul>
+
+      <div style="font-size:0.85rem;font-weight:600;color:#3a3a3c;margin-bottom:0.8rem;">技术栈</div>
+      <div style="font-size:0.85rem;line-height:1.7;color:#6e6e73;">
+        FastAPI + SQLAlchemy + SQLite + Jinja2 + HTMX
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:1rem;">
+    <a href="/" class="btn btn-secondary">返回首页</a>
+  </div>
+</div>
+{% endblock %}

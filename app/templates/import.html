@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}导入订阅 — RSS Web{% endblock %}
+
+{% block content %}
+<div style="max-width:480px;margin:0 auto;">
+  <h1 style="font-size:1.5rem;font-weight:700;margin-bottom:1.2rem;">导入订阅</h1>
+
+  {% if imported is defined %}
+    {% if imported > 0 %}
+    <div class="alert alert-success" style="margin-bottom:1rem;">成功导入 {{ imported }} 个订阅。</div>
+    {% endif %}
+    {% if errors %}
+    <div class="alert alert-error" style="margin-bottom:1rem;">
+      <div>部分导入失败：</div>
+      <ul style="margin:0.3rem 0 0 1.2rem;">
+        {% for e in errors %}
+        <li>{{ e }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+  {% endif %}
+
+  <div class="card">
+    <div class="card-body">
+      <form method="post" action="/feeds/import" enctype="multipart/form-data">
+        <div class="form-group">
+          <label for="file">选择 JSON 文件</label>
+          <input type="file" id="file" name="file" accept=".json" required>
+        </div>
+        <button type="submit" class="btn btn-primary">导入</button>
+      </form>
+      <div class="hint" style="margin-top:0.8rem;">
+        仅支持通过本系统「导出」生成的 JSON 文件。
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:1rem;">
+    <a href="/" class="btn btn-secondary">返回首页</a>
+  </div>
+</div>
+{% endblock %}

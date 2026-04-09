@@ -23,7 +23,11 @@
 {% block content %}
 <div class="page-header">
   <h1>我的订阅</h1>
-  <a href="/feeds/new" class="btn btn-primary">+ 新建订阅</a>
+  <div style="display:flex;gap:0.5rem;">
+    <a href="/feeds/import" class="btn btn-secondary">导入</a>
+    <a href="/feeds/export" class="btn btn-secondary">导出</a>
+    <a href="/feeds/new" class="btn btn-primary">+ 新建</a>
+  </div>
 </div>
 
 {% if feed_stats %}
