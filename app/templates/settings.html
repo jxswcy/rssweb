@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}AI 设置 — RSS Web{% endblock %}
+{% block title %}翻译设置 — RSS Web{% endblock %}
 
 {% block extra_style %}
 <style>
@@ -15,7 +15,7 @@
 
 {% block content %}
 <div style="max-width:520px;margin:0 auto;">
-  <h1 style="font-size:1.5rem;font-weight:700;margin-bottom:1.2rem;">AI 设置</h1>
+  <h1 style="font-size:1.5rem;font-weight:700;margin-bottom:1.2rem;">翻译设置</h1>
 
   {% if saved %}
   <div class="alert alert-success">设置已保存。</div>
@@ -25,7 +25,25 @@
     <div class="card">
       <div class="card-body">
 
+        <!-- Google 翻译（免费） -->
+        <div class="provider-title">Google 翻译 <span style="font-size:0.75rem;color:#34c759;font-weight:600;">免费</span> <span style="font-size:0.75rem;color:#86868b;font-weight:400;">— 无需 API Key，开箱即用</span></div>
+        <div style="font-size:0.85rem;color:#3a3a3c;margin-bottom:0.8rem;">
+          在订阅设置中选择「Google 翻译（免费）」作为翻译提供方即可使用，无需在此配置任何 Key。
+        </div>
+        <div>
+          <button type="button" class="btn btn-secondary test-btn"
+            hx-post="/settings/test-translation"
+            hx-vals='{"provider": "google_free"}'
+            hx-target="#test-result-google-free"
+            hx-indicator="#test-spin-google-free">
+            测试翻译
+          </button>
+          <span id="test-spin-google-free" class="htmx-indicator" style="font-size:0.8rem;color:#86868b;margin-left:0.4rem;">测试中…</span>
+          <div id="test-result-google-free" class="test-result"></div>
+        </div>
+
         <!-- OpenRouter -->
+        <div class="provider-section">
         <div class="provider-title">OpenRouter <span style="font-size:0.75rem;color:#86868b;font-weight:400;">（推荐，支持 Gemini / Claude / GPT 等所有主流模型）</span></div>
         <div class="form-group">
           <label for="openrouter_api_key">API Key</label>
@@ -50,6 +68,7 @@
           </button>
           <span id="test-spin-openrouter" class="htmx-indicator" style="font-size:0.8rem;color:#86868b;margin-left:0.4rem;">测试中…</span>
           <div id="test-result-openrouter" class="test-result"></div>
+        </div>
         </div>
 
         <!-- OpenAI -->

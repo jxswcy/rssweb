@@ -130,10 +130,11 @@
           <label for="translation_enabled" style="margin:0">启用双语翻译</label>
         </div>
         <div class="form-group">
-          <label>AI 翻译提供方 &amp; 模型</label>
+          <label>翻译提供方 &amp; 模型</label>
           <div class="model-row">
-            <select id="ai_provider" name="ai_provider" onchange="onProviderChange(this.value)">
-              <option value="openrouter"  {% if not feed or feed.ai_provider == 'openrouter' %}selected{% endif %}>OpenRouter（推荐）</option>
+            <select id="ai_provider" name="ai_provider" onchange="onProviderChange(this.value)" style="flex:0 0 200px;min-width:0;">
+              <option value="google_free" {% if not feed or feed.ai_provider == 'google_free' %}selected{% endif %}>Google 翻译（免费）</option>
+              <option value="openrouter"  {% if feed and feed.ai_provider == 'openrouter' %}selected{% endif %}>OpenRouter（推荐）</option>
               <option value="openai"      {% if feed and feed.ai_provider == 'openai' %}selected{% endif %}>OpenAI</option>
               <option value="gemini"      {% if feed and feed.ai_provider == 'gemini' %}selected{% endif %}>Google Gemini</option>
               <option value="claude"      {% if feed and feed.ai_provider == 'claude' %}selected{% endif %}>Anthropic Claude</option>
@@ -141,7 +142,7 @@
             </select>
             <input type="text" id="ai_model" name="ai_model" list="model-suggestions"
               value="{{ feed.ai_model if feed and feed.ai_model else '' }}"
-              placeholder="模型名称（留空使用默认）">
+              placeholder="模型名称（留空使用默认，Google 翻译无需填写）">
             <datalist id="model-suggestions"></datalist>
           </div>
           <div class="hint" id="model-hint"></div>
@@ -174,6 +175,11 @@
 
 <script>
 const PROVIDER_MODELS = {
+  google_free: {
+    models: [],
+    default: "",
+    hint: "无需 API Key，免费直接使用，不支持指定模型。"
+  },
   openrouter: {
     models: [
       // OpenAI
@@ -232,6 +238,17 @@ function onProviderChange(provider) {
   const modelInput = document.getElementById("ai_model");
   const datalist = document.getElementById("model-suggestions");
   const hint = document.getElementById("model-hint");
+
+  if (provider === "google_free") {
+    datalist.innerHTML = "";
+    modelInput.value = "";
+    modelInput.placeholder = "无需填写（Google 翻译不支持指定模型）";
+    modelInput.disabled = true;
+    hint.textContent = info.hint || "";
+    return;
+  }
+
+  modelInput.disabled = false;
 
   // 更新 datalist
   datalist.innerHTML = info.models

@@ -151,8 +151,8 @@ async def test_translation(
 ):
     """HTMX 翻译测试：用当前保存的 key 和 base_url 翻译一句话，返回结果或详细错误"""
     current = _get_settings(db)
-    api_key = current.get(f"{provider}_api_key")
-    if not api_key:
+    api_key = current.get(f"{provider}_api_key") or ""
+    if provider != "google_free" and not api_key:
         return HTMLResponse(
             f'<span class="test-error">❌ {html_module.escape(provider)} 尚未设置 API Key</span>'
         )

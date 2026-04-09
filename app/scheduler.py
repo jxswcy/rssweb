@@ -103,13 +103,15 @@ async def retranslate_feed(feed_id: int):
             logger.info("Feed %d: retranslate skipped — translation not enabled", feed_id)
             return
 
-        key_name = f"{feed.ai_provider}_api_key"
-        api_key = _get_setting(db, key_name)
-        if not api_key:
-            logger.warning("Feed %d: retranslate skipped — %s not set", feed_id, key_name)
-            return
-
-        ai_provider       = feed.ai_provider
+        ai_provider = feed.ai_provider
+        if ai_provider == "google_free":
+            api_key = ""
+        else:
+            key_name = f"{ai_provider}_api_key"
+            api_key = _get_setting(db, key_name)
+            if not api_key:
+                logger.warning("Feed %d: retranslate skipped — %s not set", feed_id, key_name)
+                return
         ai_model          = feed.ai_model
         raw               = _get_setting(db, f"{ai_provider}_base_url")
         provider_base_url = raw if raw else None
@@ -226,13 +228,16 @@ async def _fetch_and_store(feed_id: int):
         api_key: Optional[str] = None
         provider_base_url: Optional[str] = None
         if trans_enabled:
-            key_name = f"{ai_provider}_api_key"
-            api_key = _get_setting(db, key_name)
-            if not api_key:
-                logger.warning(
-                    "Feed %d: translation_enabled but %s is not set in settings, skipping translation",
-                    feed_id_, key_name,
-                )
+            if ai_provider == "google_free":
+                api_key = ""  # google_free 无需 API Key
+            else:
+                key_name = f"{ai_provider}_api_key"
+                api_key = _get_setting(db, key_name)
+                if not api_key:
+                    logger.warning(
+                        "Feed %d: translation_enabled but %s is not set in settings, skipping translation",
+                        feed_id_, key_name,
+                    )
             raw = _get_setting(db, f"{ai_provider}_base_url")
             provider_base_url = raw if raw else None
     finally:
@@ -270,7 +275,7 @@ async def _fetch_and_store(feed_id: int):
         content_translated: Optional[str] = None
         title_translated:   Optional[str] = None
 
-        if trans_enabled and api_key:
+        if trans_enabled and (api_key is not None):
             # 翻译标题（短文本，单独调用）
             try:
                 title_translated = await translate_text(

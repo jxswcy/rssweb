@@ -1,4 +1,7 @@
 import logging
+from urllib.parse import quote
+
+import httpx
 from bs4 import BeautifulSoup
 from openai import AsyncOpenAI
 from anthropic import AsyncAnthropic
@@ -23,6 +26,7 @@ PROVIDER_DEFAULT_MODELS: dict[str, str] = {
     "openrouter": "openai/gpt-4o-mini",
     "claude": "claude-3-5-haiku-20241022",
     "gemini": "gemini-2.0-flash",
+    "google_free": "（免费，无需 API Key）",
 }
 
 # 各提供方推荐模型列表（按翻译质量从高到低）
@@ -92,6 +96,24 @@ def split_text(text: str) -> list[str]:
     return chunks
 
 
+async def _translate_text_google_free(text: str, target_lang: str) -> str:
+    """使用 Google 免费翻译 API 翻译纯文本（不含 HTML 标签）。
+    Google 免费端点对长文本有限制，split_text 分块后每块单独调用。"""
+    # 将 target_lang 格式转为 Google 接受的格式（zh-CN → zh-CN, ja → ja）
+    gl = target_lang.replace("-", "_") if "_" not in target_lang else target_lang
+    url = (
+        "https://translate.googleapis.com/translate_a/single"
+        f"?client=gtx&sl=auto&tl={quote(gl)}&dt=t&q={quote(text)}"
+    )
+    async with httpx.AsyncClient(timeout=30) as client:
+        resp = await client.get(url)
+        resp.raise_for_status()
+        data = resp.json()
+    # 返回格式：[[["译文", "原文", ...], ...], ...]
+    parts = [item[0] for item in data[0] if item[0]]
+    return "".join(parts)
+
+
 async def translate_text(
     text: str,
     provider: str,
@@ -104,6 +126,27 @@ async def translate_text(
     base_url 非空时覆盖 PROVIDER_BASE_URLS 中的默认值。"""
     if not text:
         return text
+
+    # Google 免费翻译：无需 API Key，直接调用公开端点
+    if provider == "google_free":
+        chunks = split_text(text)
+        translated_chunks = []
+        for chunk in chunks:
+            try:
+                # Google 免费 API 不支持 HTML，先提取纯文本段落翻译再拼回
+                soup = BeautifulSoup(chunk, "html.parser")
+                for tag in soup.find_all(True):
+                    if tag.string and tag.string.strip():
+                        try:
+                            translated = await _translate_text_google_free(tag.string.strip(), target_lang)
+                            tag.string.replace_with(translated)
+                        except Exception:
+                            pass  # 单标签失败不影响整体
+                translated_chunks.append(str(soup))
+            except Exception as exc:
+                logger.error("google_free translation failed: %s", exc, exc_info=True)
+                return text
+        return "".join(translated_chunks)
 
     resolved_model = model or PROVIDER_DEFAULT_MODELS.get(provider, "gpt-4o-mini")
 
