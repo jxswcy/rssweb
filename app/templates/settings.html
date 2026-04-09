@@ -20,6 +20,20 @@
           <input type="password" id="openai_api_key" name="openai_api_key" placeholder="留空则不修改">
         </div>
         <div class="form-group">
+          <label for="deepseek_api_key">
+            DeepSeek API Key
+            {% if deepseek_key_set %}<span style="color:#34c759;font-size:0.8rem;">（已设置）</span>{% endif %}
+          </label>
+          <input type="password" id="deepseek_api_key" name="deepseek_api_key" placeholder="留空则不修改">
+        </div>
+        <div class="form-group">
+          <label for="openrouter_api_key">
+            OpenRouter API Key
+            {% if openrouter_key_set %}<span style="color:#34c759;font-size:0.8rem;">（已设置）</span>{% endif %}
+          </label>
+          <input type="password" id="openrouter_api_key" name="openrouter_api_key" placeholder="留空则不修改">
+        </div>
+        <div class="form-group">
           <label for="claude_api_key">
             Claude API Key
             {% if claude_key_set %}<span style="color:#34c759;font-size:0.8rem;">（已设置）</span>{% endif %}
