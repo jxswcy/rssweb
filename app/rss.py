@@ -1,4 +1,4 @@
-from datetime import timezone
+from datetime import datetime, timezone
 from feedgen.feed import FeedGenerator
 from app.models import Feed, Article
 
@@ -12,11 +12,12 @@ def generate_rss_feed(feed: Feed, articles: list[Article], base_url: str) -> byt
     fg.link(href=f"{base_url}/rss/{feed.id}", rel="self")
     fg.language("zh-CN")
 
-    if feed.last_fetched_at:
-        updated = feed.last_fetched_at
-        if updated.tzinfo is None:
-            updated = updated.replace(tzinfo=timezone.utc)
-        fg.updated(updated)
+    updated_dt = feed.last_fetched_at or getattr(feed, "created_at", None)
+    if updated_dt is None:
+        updated_dt = datetime.now(timezone.utc)
+    elif updated_dt.tzinfo is None:
+        updated_dt = updated_dt.replace(tzinfo=timezone.utc)
+    fg.updated(updated_dt)
 
     for article in articles:
         fe = fg.add_entry(order="append")
@@ -25,7 +26,9 @@ def generate_rss_feed(feed: Feed, articles: list[Article], base_url: str) -> byt
         fe.link(href=article.url)
 
         pub = article.published_at or article.fetched_at
-        if pub.tzinfo is None:
+        if pub is None:
+            pub = datetime.now(timezone.utc)
+        elif pub.tzinfo is None:
             pub = pub.replace(tzinfo=timezone.utc)
         fe.published(pub)
         fe.updated(pub)

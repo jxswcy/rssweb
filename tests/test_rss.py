@@ -68,3 +68,19 @@ def test_rss_original_only_when_no_translation():
     xml = generate_rss_feed(feed, articles, base_url="http://localhost:8000")
     assert b"Original 1" in xml
     assert "翻译".encode() not in xml
+
+
+def test_rss_handles_none_fetched_at():
+    """fetched_at 和 published_at 都为 None 时不应崩溃"""
+    feed = _make_feed()
+    a = MockArticle(
+        id=99,
+        title="Edge Case",
+        url="https://example.com/edge",
+        content_original="<p>text</p>",
+        content_translated=None,
+        fetched_at=None,
+        published_at=None
+    )
+    xml = generate_rss_feed(feed, [a], base_url="http://localhost:8000")
+    assert b"Edge Case" in xml
