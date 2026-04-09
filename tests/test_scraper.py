@@ -117,3 +117,115 @@ async def test_fetch_articles_concurrently_partial_failure():
     bad = next(r for r in results if r["title"] == "Bad")
     assert good["content"] == "<p>good content</p>"
     assert "失败" in bad["content"] or "error" in bad["content"].lower()
+
+
+SAMPLE_ARTICLE_LIST_HTML = """
+<html><body>
+  <ul>
+    <li class="post">
+      <h3><a href="/post/1">Article One Title</a></h3>
+      <p>summary...</p>
+    </li>
+    <li class="post">
+      <h3><a href="/post/2">Article Two Title</a></h3>
+      <p>summary...</p>
+    </li>
+  </ul>
+</body></html>
+"""
+
+SAMPLE_DIRECT_ANCHOR_HTML = """
+<html><body>
+  <ul>
+    <li><a class="post-link" href="/post/1">Article One</a></li>
+    <li><a class="post-link" href="/post/2">Article Two</a></li>
+  </ul>
+</body></html>
+"""
+
+SAMPLE_CONTAINER_WITH_LINKS_HTML = """
+<html><body>
+  <article class="post">
+    <span class="date">2026-01-01</span>
+    <a href="/post/1">Long Article Title Here</a>
+    <a href="/tag/foo">foo</a>
+  </article>
+  <article class="post">
+    <span class="date">2026-01-02</span>
+    <a href="/post/2">Another Long Title</a>
+    <a href="/tag/bar">bar</a>
+  </article>
+</body></html>
+"""
+
+
+@pytest.mark.asyncio
+async def test_article_selector_heading_anchor():
+    """路径 2：li 容器内含 h3 a，提取标题锚点"""
+    with patch("app.scraper.httpx.AsyncClient") as MockClient:
+        mock_response = MagicMock()
+        mock_response.text = SAMPLE_ARTICLE_LIST_HTML
+        mock_response.raise_for_status = MagicMock()
+        MockClient.return_value.__aenter__ = AsyncMock(return_value=MockClient.return_value)
+        MockClient.return_value.__aexit__ = AsyncMock(return_value=False)
+        MockClient.return_value.get = AsyncMock(return_value=mock_response)
+
+        articles = await fetch_article_list(
+            url="https://example.com",
+            article_selector="li.post",
+            title_selector=None,
+            link_selector=None,
+            base_url="https://example.com",
+        )
+
+    assert len(articles) == 2
+    assert articles[0]["title"] == "Article One Title"
+    assert articles[0]["url"] == "https://example.com/post/1"
+
+
+@pytest.mark.asyncio
+async def test_article_selector_direct_anchor():
+    """路径 1：selector 直接指向 <a> 元素"""
+    with patch("app.scraper.httpx.AsyncClient") as MockClient:
+        mock_response = MagicMock()
+        mock_response.text = SAMPLE_DIRECT_ANCHOR_HTML
+        mock_response.raise_for_status = MagicMock()
+        MockClient.return_value.__aenter__ = AsyncMock(return_value=MockClient.return_value)
+        MockClient.return_value.__aexit__ = AsyncMock(return_value=False)
+        MockClient.return_value.get = AsyncMock(return_value=mock_response)
+
+        articles = await fetch_article_list(
+            url="https://example.com",
+            article_selector="a.post-link",
+            title_selector=None,
+            link_selector=None,
+            base_url="https://example.com",
+        )
+
+    assert len(articles) == 2
+    assert articles[0]["title"] == "Article One"
+    assert articles[0]["url"] == "https://example.com/post/1"
+
+
+@pytest.mark.asyncio
+async def test_article_selector_longest_anchor():
+    """路径 3：容器内有多个 <a>，取文字最长的那个"""
+    with patch("app.scraper.httpx.AsyncClient") as MockClient:
+        mock_response = MagicMock()
+        mock_response.text = SAMPLE_CONTAINER_WITH_LINKS_HTML
+        mock_response.raise_for_status = MagicMock()
+        MockClient.return_value.__aenter__ = AsyncMock(return_value=MockClient.return_value)
+        MockClient.return_value.__aexit__ = AsyncMock(return_value=False)
+        MockClient.return_value.get = AsyncMock(return_value=mock_response)
+
+        articles = await fetch_article_list(
+            url="https://example.com",
+            article_selector="article.post",
+            title_selector=None,
+            link_selector=None,
+            base_url="https://example.com",
+        )
+
+    assert len(articles) == 2
+    assert articles[0]["title"] == "Long Article Title Here"
+    assert articles[0]["url"] == "https://example.com/post/1"

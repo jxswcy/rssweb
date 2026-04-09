@@ -20,9 +20,10 @@ DELAY_BETWEEN_REQUESTS = 1.0
 
 async def fetch_article_list(
     url: str,
-    title_selector: Optional[str],
-    link_selector: Optional[str],
-    base_url: str,
+    article_selector: Optional[str] = None,
+    title_selector: Optional[str] = None,
+    link_selector: Optional[str] = None,
+    base_url: str = "",
 ) -> list[dict]:
     """抓取文章列表页，返回 [{"title": ..., "url": ...}, ...]"""
     async with httpx.AsyncClient(headers=HEADERS, timeout=30, follow_redirects=True) as client:
@@ -31,6 +32,10 @@ async def fetch_article_list(
         html = response.text
 
     soup = BeautifulSoup(html, "html.parser")
+
+    # 优先：单 selector 模式
+    if article_selector:
+        return _extract_from_article_selector(soup, article_selector, base_url)
 
     if title_selector and link_selector:
         title_tags = soup.select(title_selector)
@@ -51,6 +56,57 @@ async def fetch_article_list(
 
     # 启发式：寻找包含文章链接的 <a> 标签
     return _heuristic_extract(soup, base_url)
+
+
+def _extract_from_article_selector(
+    soup: BeautifulSoup, article_selector: str, base_url: str
+) -> list[dict]:
+    """
+    用单个 selector 匹配文章元素，自动提取标题和链接。
+    提取优先级：
+      1. 元素本身是 <a> → 直接取文字和 href
+      2. 元素内有 h1/h2/h3/h4 a → 取第一个标题锚点
+      3. 元素内有任意 <a> → 取文字最长的那个
+      4. 都无 → 跳过
+    """
+    elements = soup.select(article_selector)
+    results = []
+    seen: set[str] = set()
+
+    for el in elements:
+        anchor = None
+
+        if el.name == "a":
+            # 路径 1：selector 直接指向 <a>
+            anchor = el
+        else:
+            # 路径 2：容器内有标题锚点
+            for heading in ("h1", "h2", "h3", "h4"):
+                heading_anchor = el.select_one(f"{heading} a")
+                if heading_anchor:
+                    anchor = heading_anchor
+                    break
+
+            if anchor is None:
+                # 路径 3：取文字最长的 <a>
+                all_anchors = el.find_all("a", href=True)
+                if all_anchors:
+                    anchor = max(all_anchors, key=lambda a: len(a.get_text(strip=True)))
+
+        if anchor is None:
+            continue
+
+        href = anchor.get("href", "")
+        if not href:
+            continue
+        full_url = urljoin(base_url, href)
+        title = anchor.get_text(strip=True)
+        if not title or full_url in seen:
+            continue
+        seen.add(full_url)
+        results.append({"title": title, "url": full_url})
+
+    return results
 
 
 def _heuristic_extract(soup: BeautifulSoup, base_url: str) -> list[dict]:
