@@ -146,12 +146,11 @@ async def translate_text(
                         logger.warning("google_free: failed to translate paragraph: %s", exc)
                 return str(soup)
             else:
-                # 无段落结构：整块纯文本翻译
+                # 无段落结构：整块纯文本翻译，原样返回纯文本（不包 <p>）
                 plain = soup.get_text(separator="\n").strip()
                 if not plain:
                     return text
-                translated_text = await _translate_text_google_free(plain, target_lang)
-                return f"<p>{translated_text}</p>"
+                return await _translate_text_google_free(plain, target_lang)
         except Exception as exc:
             logger.error("google_free translation failed: %s", exc, exc_info=True)
             return text
