@@ -251,7 +251,7 @@ async def export_feeds(db: Session = Depends(get_db), _: None = Depends(require_
 
 
 @router.get("/feeds/import", response_class=HTMLResponse)
-async def import_feeds_page(request: Request, _: None = Depends(require_login)):
+async def import_page(request: Request, _: None = Depends(require_login)):
     """导入订阅页面"""
     return templates.TemplateResponse("import.html", {"request": request})
 
