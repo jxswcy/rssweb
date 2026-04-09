@@ -207,3 +207,51 @@ def test_settings_shows_deepseek_key_set(client):
     assert response.status_code == 200
     # 模板中 deepseek_key_set=True 时显示「已设置」
     assert "DeepSeek" in response.text
+
+
+def test_create_rss_source_feed(client):
+    """创建 rss_source 类型的 Feed，验证 DB 写入 feed_type 正确"""
+    response = client.post(
+        "/feeds",
+        data={
+            "name": "RSS Test Feed",
+            "url": "https://example.com/feed.rss",
+            "update_interval": "60",
+            "ai_provider": "openrouter",
+            "feed_type": "rss_source",
+        },
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+
+    db = TestingSessionLocal()
+    from app.models import Feed
+    feed = db.query(Feed).filter(Feed.name == "RSS Test Feed").first()
+    assert feed is not None
+    assert feed.feed_type == "rss_source"
+    db.close()
+
+
+def test_edit_rss_source_feed_shows_type(client):
+    """编辑 rss_source Feed 时，响应页面包含该 feed_type 的值"""
+    # 先创建
+    client.post(
+        "/feeds",
+        data={
+            "name": "RSS Edit Feed",
+            "url": "https://example.com/feed2.rss",
+            "update_interval": "60",
+            "ai_provider": "openrouter",
+            "feed_type": "rss_source",
+        },
+        follow_redirects=True,
+    )
+    db = TestingSessionLocal()
+    from app.models import Feed
+    feed = db.query(Feed).filter(Feed.name == "RSS Edit Feed").first()
+    feed_id = feed.id
+    db.close()
+
+    response = client.get(f"/feeds/{feed_id}/edit")
+    assert response.status_code == 200
+    assert "rss_source" in response.text

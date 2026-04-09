@@ -68,6 +68,7 @@ async def create_feed(
     ai_provider: str = Form("openai"),
     ai_model: Optional[str] = Form(None),
     update_interval: int = Form(60),
+    feed_type: str = Form("webpage"),
     db: Session = Depends(get_db),
 ):
     feed = Feed(
@@ -79,6 +80,7 @@ async def create_feed(
         ai_provider=ai_provider,
         ai_model=ai_model or None,
         update_interval=update_interval,
+        feed_type=feed_type,
     )
     db.add(feed)
     db.commit()
@@ -159,6 +161,7 @@ async def update_feed(
     ai_provider: str = Form("openai"),
     ai_model: Optional[str] = Form(None),
     update_interval: int = Form(60),
+    feed_type: str = Form("webpage"),
     db: Session = Depends(get_db),
 ):
     feed = db.query(Feed).filter(Feed.id == feed_id).first()
@@ -172,6 +175,7 @@ async def update_feed(
     feed.ai_provider = ai_provider
     feed.ai_model = ai_model or None
     feed.update_interval = update_interval
+    feed.feed_type = feed_type
     db.commit()
     register_feed(feed)
     return RedirectResponse(url="/", status_code=303)
