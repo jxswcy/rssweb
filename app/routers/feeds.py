@@ -1,3 +1,4 @@
+import html
 from typing import Optional
 from urllib.parse import urlparse
 
@@ -75,6 +76,40 @@ async def create_feed(
     return RedirectResponse(url="/", status_code=303)
 
 
+@router.post("/feeds/preview")
+async def preview_feed(
+    request: Request,
+    url: str = Form(...),
+    title_selector: Optional[str] = Form(None),
+    link_selector: Optional[str] = Form(None),
+):
+    """HTMX 预览端点：返回提取到的文章列表 HTML 片段"""
+    try:
+        parsed_url = urlparse(url)
+        base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
+        articles = await fetch_article_list(
+            url=url,
+            title_selector=title_selector or None,
+            link_selector=link_selector or None,
+            base_url=base_url,
+        )
+        items_html = "".join(
+            f'<li><a href="{html.escape(a["url"], quote=True)}" target="_blank">'
+            f'{html.escape(a["title"])}</a></li>'
+            for a in articles[:20]
+        )
+        return HTMLResponse(
+            f'<ul class="preview-list">{items_html}</ul>'
+            if items_html
+            else '<p class="preview-empty">未找到文章，请检查 URL 或 Selector</p>'
+        )
+    except Exception as exc:
+        return HTMLResponse(
+            f'<p class="preview-error">预览失败：{html.escape(str(exc))}</p>',
+            status_code=200,
+        )
+
+
 @router.post("/feeds/{feed_id}", response_class=RedirectResponse)
 async def update_feed(
     feed_id: int,
@@ -124,32 +159,3 @@ async def refresh_feed(feed_id: int, db: Session = Depends(get_db)):
     return RedirectResponse(url="/", status_code=303)
 
 
-@router.post("/feeds/preview")
-async def preview_feed(
-    request: Request,
-    url: str = Form(...),
-    title_selector: Optional[str] = Form(None),
-    link_selector: Optional[str] = Form(None),
-):
-    """HTMX 预览端点：返回提取到的文章列表 HTML 片段"""
-    try:
-        base_url = f"{urlparse(url).scheme}://{urlparse(url).netloc}"
-        articles = await fetch_article_list(
-            url=url,
-            title_selector=title_selector or None,
-            link_selector=link_selector or None,
-            base_url=base_url,
-        )
-        items_html = "".join(
-            f'<li><a href="{a["url"]}" target="_blank">{a["title"]}</a></li>'
-            for a in articles[:20]
-        )
-        return HTMLResponse(
-            f'<ul class="preview-list">{items_html}</ul>'
-            if items_html
-            else '<p class="preview-empty">未找到文章，请检查 URL 或 Selector</p>'
-        )
-    except Exception as exc:
-        return HTMLResponse(
-            f'<p class="preview-error">预览失败：{exc}</p>', status_code=200
-        )
