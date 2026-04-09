@@ -40,9 +40,9 @@ async def save_settings(
     translate_target_lang: str = Form("zh-CN"),
     db: Session = Depends(get_db),
 ):
-    updates = {
-        "translate_target_lang": translate_target_lang,
-    }
+    updates = {}
+    if translate_target_lang.strip():
+        updates["translate_target_lang"] = translate_target_lang.strip()
     if openai_api_key.strip():
         updates["openai_api_key"] = openai_api_key.strip()
     if claude_api_key.strip():
