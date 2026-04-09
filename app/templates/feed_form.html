@@ -39,14 +39,32 @@
     <div class="card">
       <div class="card-body">
         <div class="form-group">
+          <label>订阅类型</label>
+          <div style="display:flex;gap:1.5rem;margin-top:0.3rem;">
+            <label style="font-weight:400;cursor:pointer;">
+              <input type="radio" name="feed_type" value="webpage"
+                {% if not feed or feed.feed_type == 'webpage' %}checked{% endif %}
+                onchange="onFeedTypeChange(this.value)">
+              网页抓取
+            </label>
+            <label style="font-weight:400;cursor:pointer;">
+              <input type="radio" name="feed_type" value="rss_source"
+                {% if feed and feed.feed_type == 'rss_source' %}checked{% endif %}
+                onchange="onFeedTypeChange(this.value)">
+              RSS 源
+            </label>
+          </div>
+        </div>
+        <div class="form-group">
           <label for="name">订阅名称</label>
           <input type="text" id="name" name="name" required value="{{ feed.name if feed else '' }}" placeholder="我的博客">
         </div>
         <div class="form-group">
-          <label for="url">目标列表页 URL</label>
+          <label id="url-label" for="url">目标列表页 URL</label>
           <input type="url" id="url" name="url" required value="{{ feed.url if feed else '' }}" placeholder="https://example.com/blog">
         </div>
 
+        <div id="webpage-only-section">
         <div class="section-title">文章 Selector</div>
         <div class="form-group">
           <label for="sample_selector_1">示例文章 1 的 Selector（从浏览器直接粘贴）</label>
@@ -79,6 +97,7 @@
         </button>
         <span id="preview-spinner" class="htmx-indicator" style="font-size:0.85rem;color:#86868b;margin-left:0.5rem;">加载中…</span>
         <div id="preview-box" class="preview-box"></div>
+        </div>
 
         <div class="section-title">正文抓取</div>
         <div class="form-group">
@@ -378,6 +397,24 @@ document.getElementById('sample_selector_2').addEventListener('input', onSampleC
   if (savedModel) {
     document.getElementById("ai_model").value = savedModel;
   }
+})();
+
+function onFeedTypeChange(type) {
+  const webpageSection = document.getElementById('webpage-only-section');
+  const urlLabel = document.getElementById('url-label');
+  if (type === 'rss_source') {
+    webpageSection.style.display = 'none';
+    urlLabel.textContent = 'RSS 源地址';
+  } else {
+    webpageSection.style.display = '';
+    urlLabel.textContent = '目标列表页 URL';
+  }
+}
+
+// 初始化：根据当前选中类型设置显隐状态
+(function() {
+  const checked = document.querySelector('input[name="feed_type"]:checked');
+  if (checked) onFeedTypeChange(checked.value);
 })();
 </script>
 {% endblock %}
