@@ -178,4 +178,4 @@ MIT
 
 ---
 
-*Built by [jxswcy](https://github.com/jxswcy)*
+Built by [jxswcy](https://github.com/jxswcy)
