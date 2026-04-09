@@ -62,3 +62,75 @@ async def test_translate_returns_original_on_error():
             target_lang="zh-CN",
         )
     assert result == "Hello world"
+
+
+@pytest.mark.asyncio
+async def test_translate_with_deepseek():
+    with patch("app.translator.AsyncOpenAI") as MockOpenAI:
+        mock_client = MagicMock()
+        MockOpenAI.return_value = mock_client
+        mock_client.chat.completions.create = AsyncMock(
+            return_value=MagicMock(
+                choices=[MagicMock(message=MagicMock(content="你好世界"))]
+            )
+        )
+        result = await translate_text(
+            text="Hello world",
+            provider="deepseek",
+            api_key="sk-deepseek-test",
+            model="deepseek-chat",
+            target_lang="zh-CN",
+        )
+    assert result == "你好世界"
+    # 验证使用了正确的 base_url
+    MockOpenAI.assert_called_once_with(
+        api_key="sk-deepseek-test",
+        base_url="https://api.deepseek.com",
+    )
+
+
+@pytest.mark.asyncio
+async def test_translate_with_openrouter():
+    with patch("app.translator.AsyncOpenAI") as MockOpenAI:
+        mock_client = MagicMock()
+        MockOpenAI.return_value = mock_client
+        mock_client.chat.completions.create = AsyncMock(
+            return_value=MagicMock(
+                choices=[MagicMock(message=MagicMock(content="你好世界"))]
+            )
+        )
+        result = await translate_text(
+            text="Hello world",
+            provider="openrouter",
+            api_key="sk-or-test",
+            model="openai/gpt-4o-mini",
+            target_lang="zh-CN",
+        )
+    assert result == "你好世界"
+    MockOpenAI.assert_called_once_with(
+        api_key="sk-or-test",
+        base_url="https://openrouter.ai/api/v1",
+    )
+
+
+@pytest.mark.asyncio
+async def test_translate_uses_custom_model():
+    """验证 model 参数被正确传给 API"""
+    with patch("app.translator.AsyncOpenAI") as MockOpenAI:
+        mock_client = MagicMock()
+        MockOpenAI.return_value = mock_client
+        create_mock = AsyncMock(
+            return_value=MagicMock(
+                choices=[MagicMock(message=MagicMock(content="译文"))]
+            )
+        )
+        mock_client.chat.completions.create = create_mock
+        await translate_text(
+            text="Hello",
+            provider="openai",
+            api_key="sk-test",
+            model="gpt-4o",
+            target_lang="zh-CN",
+        )
+    call_kwargs = create_mock.call_args.kwargs
+    assert call_kwargs["model"] == "gpt-4o"
