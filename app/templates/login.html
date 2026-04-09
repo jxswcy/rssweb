@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}登录 — RSS Web{% endblock %}
+
+{% block content %}
+<div style="max-width:360px;margin:4rem auto;">
+  <div class="card">
+    <div class="card-body">
+      <h1 style="font-size:1.4rem;font-weight:700;margin-bottom:1.2rem;">登录</h1>
+      {% if error %}
+      <div class="alert alert-error" style="margin-bottom:1rem;">{{ error }}</div>
+      {% endif %}
+      <form method="post" action="/login">
+        <div class="form-group">
+          <label for="password">密码</label>
+          <input type="password" id="password" name="password" required autofocus
+            placeholder="输入管理密码">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;">登录</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

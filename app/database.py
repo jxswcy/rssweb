@@ -50,3 +50,18 @@ def init_db():
                 conn.commit()
             except Exception:
                 pass  # 字段已存在则忽略
+
+    # 写入默认管理员密码（首次初始化时）
+    from passlib.context import CryptContext
+    _pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+    with engine.connect() as conn:
+        row = conn.execute(
+            text("SELECT value FROM settings WHERE key = 'admin_password_hash'")
+        ).fetchone()
+        if not row:
+            default_hash = _pwd_context.hash("admin")
+            conn.execute(
+                text("INSERT INTO settings (key, value) VALUES ('admin_password_hash', :h)"),
+                {"h": default_hash},
+            )
+            conn.commit()
