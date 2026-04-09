@@ -1,0 +1,174 @@
+"""
+路由集成测试
+使用 TestClient（同步），通过 dependency_override 替换数据库，
+mock scheduler 避免实际启动 APScheduler。
+"""
+from unittest.mock import MagicMock, patch
+
+import pytest
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from sqlalchemy.pool import StaticPool
+
+from app.database import Base, get_db
+
+# 使用内存 SQLite，StaticPool 保证所有连接共享同一内存数据库
+engine = create_engine(
+    "sqlite:///:memory:",
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
+)
+TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+def override_get_db():
+    db = TestingSessionLocal()
+    try:
+        yield db
+    except Exception:
+        db.rollback()
+        raise
+    finally:
+        db.close()
+
+
+@pytest.fixture(scope="module")
+def client():
+    """创建测试客户端，mock scheduler，使用内存 DB"""
+    import app.models  # noqa: F401 — register all models with Base.metadata
+    Base.metadata.create_all(bind=engine)
+
+    with (
+        patch("app.scheduler.start_scheduler"),
+        patch("app.scheduler.stop_scheduler"),
+        patch("app.routers.feeds.register_feed"),
+        patch("app.routers.feeds.remove_feed_job"),
+        patch("app.routers.feeds.run_feed_now"),
+        patch("app.database.init_db"),  # skip production DB creation in lifespan
+    ):
+        from app.main import app
+        app.dependency_overrides[get_db] = override_get_db
+        with TestClient(app, raise_server_exceptions=True) as c:
+            yield c
+        app.dependency_overrides.clear()
+
+    Base.metadata.drop_all(bind=engine)
+
+
+# ── 首页 ──────────────────────────────────────────────────────────────────────
+
+def test_index_returns_200(client):
+    response = client.get("/")
+    assert response.status_code == 200
+    assert "RSS" in response.text
+
+
+# ── 新建 Feed 表单 ─────────────────────────────────────────────────────────────
+
+def test_new_feed_form(client):
+    response = client.get("/feeds/new")
+    assert response.status_code == 200
+    assert "form" in response.text.lower()
+
+
+# ── 创建 Feed ─────────────────────────────────────────────────────────────────
+
+def test_create_feed_and_list(client):
+    response = client.post(
+        "/feeds",
+        data={
+            "name": "Test Blog",
+            "url": "https://example.com",
+            "update_interval": "60",
+            "ai_provider": "openai",
+        },
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    assert "Test Blog" in response.text
+
+
+# ── 编辑 Feed ─────────────────────────────────────────────────────────────────
+
+def test_edit_feed_form(client):
+    # 先查询 feed id
+    db = TestingSessionLocal()
+    from app.models import Feed
+    feed = db.query(Feed).filter(Feed.name == "Test Blog").first()
+    db.close()
+
+    response = client.get(f"/feeds/{feed.id}/edit")
+    assert response.status_code == 200
+    assert "Test Blog" in response.text
+
+
+def test_edit_feed_404(client):
+    response = client.get("/feeds/9999/edit")
+    assert response.status_code == 404
+
+
+# ── Settings ──────────────────────────────────────────────────────────────────
+
+def test_settings_page(client):
+    response = client.get("/settings")
+    assert response.status_code == 200
+    assert "API" in response.text
+
+
+def test_save_settings(client):
+    response = client.post(
+        "/settings",
+        data={"translate_target_lang": "zh-CN"},
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    assert "保存" in response.text
+
+
+# ── RSS 输出 ──────────────────────────────────────────────────────────────────
+
+def test_rss_404_for_unknown_feed(client):
+    response = client.get("/rss/9999")
+    assert response.status_code == 404
+
+
+def test_rss_returns_atom_xml(client):
+    # 查询现有 feed
+    db = TestingSessionLocal()
+    from app.models import Feed
+    feed = db.query(Feed).filter(Feed.name == "Test Blog").first()
+    db.close()
+
+    response = client.get(f"/rss/{feed.id}")
+    assert response.status_code == 200
+    content_type = response.headers.get("content-type", "")
+    assert "atom" in content_type or "xml" in content_type
+    assert b"Test Blog" in response.content
+
+
+# ── 删除 Feed ─────────────────────────────────────────────────────────────────
+
+def test_delete_feed(client):
+    # 先创建一个 feed 专门用于删除测试
+    client.post(
+        "/feeds",
+        data={
+            "name": "To Delete",
+            "url": "https://todelete.example.com",
+            "update_interval": "60",
+            "ai_provider": "openai",
+        },
+        follow_redirects=True,
+    )
+
+    db = TestingSessionLocal()
+    from app.models import Feed
+    feed = db.query(Feed).filter(Feed.name == "To Delete").first()
+    feed_id = feed.id
+    db.close()
+
+    response = client.post(f"/feeds/{feed_id}/delete", follow_redirects=True)
+    assert response.status_code == 200
+    assert "To Delete" not in response.text
