@@ -48,6 +48,8 @@ def client():
         patch("app.routers.feeds.run_feed_now"),
         patch("app.database.init_db"),  # skip production DB creation in lifespan
     ):
+        # app.main 必须在 patch() 块内部 import，确保 scheduler mock 在
+        # FastAPI lifespan 绑定 start_scheduler/stop_scheduler 之前生效
         from app.main import app
         app.dependency_overrides[get_db] = override_get_db
         with TestClient(app, raise_server_exceptions=True) as c:
@@ -55,6 +57,28 @@ def client():
         app.dependency_overrides.clear()
 
     Base.metadata.drop_all(bind=engine)
+
+
+@pytest.fixture(scope="module")
+def sample_feed(client):
+    """创建一个共享的测试 Feed，整个模块测试期间可用"""
+    resp = client.post(
+        "/feeds",
+        data={
+            "name": "Sample Feed",
+            "url": "https://sample.example.com",
+            "update_interval": "60",
+            "ai_provider": "openai",
+        },
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    db = TestingSessionLocal()
+    from app.models import Feed
+    feed = db.query(Feed).filter(Feed.name == "Sample Feed").first()
+    feed_id = feed.id
+    db.close()
+    return feed_id
 
 
 # ── 首页 ──────────────────────────────────────────────────────────────────────
@@ -92,16 +116,10 @@ def test_create_feed_and_list(client):
 
 # ── 编辑 Feed ─────────────────────────────────────────────────────────────────
 
-def test_edit_feed_form(client):
-    # 先查询 feed id
-    db = TestingSessionLocal()
-    from app.models import Feed
-    feed = db.query(Feed).filter(Feed.name == "Test Blog").first()
-    db.close()
-
-    response = client.get(f"/feeds/{feed.id}/edit")
+def test_edit_feed_form(client, sample_feed):
+    response = client.get(f"/feeds/{sample_feed}/edit")
     assert response.status_code == 200
-    assert "Test Blog" in response.text
+    assert "Sample Feed" in response.text
 
 
 def test_edit_feed_404(client):
@@ -124,7 +142,7 @@ def test_save_settings(client):
         follow_redirects=True,
     )
     assert response.status_code == 200
-    assert "保存" in response.text
+    assert "设置已保存" in response.text  # 验证 saved=True 的提示
 
 
 # ── RSS 输出 ──────────────────────────────────────────────────────────────────
@@ -134,18 +152,12 @@ def test_rss_404_for_unknown_feed(client):
     assert response.status_code == 404
 
 
-def test_rss_returns_atom_xml(client):
-    # 查询现有 feed
-    db = TestingSessionLocal()
-    from app.models import Feed
-    feed = db.query(Feed).filter(Feed.name == "Test Blog").first()
-    db.close()
-
-    response = client.get(f"/rss/{feed.id}")
+def test_rss_returns_atom_xml(client, sample_feed):
+    response = client.get(f"/rss/{sample_feed}")
     assert response.status_code == 200
     content_type = response.headers.get("content-type", "")
     assert "atom" in content_type or "xml" in content_type
-    assert b"Test Blog" in response.content
+    assert b"Sample Feed" in response.content
 
 
 # ── 删除 Feed ─────────────────────────────────────────────────────────────────
