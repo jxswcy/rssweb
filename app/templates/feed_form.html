@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}{% if feed %}编辑订阅{% else %}新建订阅{% endif %} — RSS Web{% endblock %}
+
+{% block extra_style %}
+<style>
+  .form-card { max-width: 640px; margin: 0 auto; }
+  .section-title { font-size: 1rem; font-weight: 600; color: #3a3a3c; margin: 1.2rem 0 0.8rem; border-top: 1px solid #e5e5ea; padding-top: 1rem; }
+  .preview-box { margin-top: 0.8rem; min-height: 60px; background: #f5f5f7; border-radius: 8px; padding: 0.8rem 1rem; }
+  .preview-list { list-style: none; }
+  .preview-list li { padding: 0.3rem 0; border-bottom: 1px solid #e5e5ea; font-size: 0.88rem; }
+  .preview-list a { color: #667eea; text-decoration: none; }
+  .preview-empty, .preview-error { font-size: 0.88rem; color: #86868b; }
+  .preview-error { color: #ff3b30; }
+  .form-actions { display: flex; gap: 0.8rem; margin-top: 1.5rem; }
+  .interval-options { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .interval-options label { display: flex; align-items: center; gap: 0.3rem; font-weight: 400; cursor: pointer; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-card">
+  <h1 style="font-size:1.5rem;font-weight:700;margin-bottom:1.2rem;">
+    {% if feed %}编辑订阅{% else %}新建订阅{% endif %}
+  </h1>
+
+  {% if error %}
+  <div class="alert alert-error">{{ error }}</div>
+  {% endif %}
+
+  <form method="post" action="{% if feed %}/feeds/{{ feed.id }}{% else %}/feeds{% endif %}">
+    <div class="card">
+      <div class="card-body">
+        <div class="form-group">
+          <label for="name">订阅名称</label>
+          <input type="text" id="name" name="name" required value="{{ feed.name if feed else '' }}" placeholder="我的博客">
+        </div>
+        <div class="form-group">
+          <label for="url">目标列表页 URL</label>
+          <input type="url" id="url" name="url" required value="{{ feed.url if feed else '' }}" placeholder="https://example.com/blog">
+        </div>
+
+        <div class="section-title">CSS Selector（可留空，自动识别）</div>
+        <div class="form-group">
+          <label for="title_selector">标题 Selector</label>
+          <input type="text" id="title_selector" name="title_selector" value="{{ feed.title_selector if feed and feed.title_selector else '' }}" placeholder=".post-title a">
+        </div>
+        <div class="form-group">
+          <label for="link_selector">链接 Selector</label>
+          <input type="text" id="link_selector" name="link_selector" value="{{ feed.link_selector if feed and feed.link_selector else '' }}" placeholder=".post-title a">
+        </div>
+        <div class="form-group">
+          <label for="content_selector">正文 Selector</label>
+          <input type="text" id="content_selector" name="content_selector" value="{{ feed.content_selector if feed and feed.content_selector else '' }}" placeholder=".article-content">
+          <div class="hint">留空则使用 trafilatura 自动提取正文</div>
+        </div>
+
+        <button type="button" class="btn btn-secondary"
+          hx-post="/feeds/preview"
+          hx-include="#url,#title_selector,#link_selector"
+          hx-target="#preview-box"
+          hx-indicator="#preview-spinner">
+          预览文章列表
+        </button>
+        <span id="preview-spinner" class="htmx-indicator" style="font-size:0.85rem;color:#86868b;margin-left:0.5rem;">加载中…</span>
+        <div id="preview-box" class="preview-box"></div>
+
+        <div class="section-title">翻译设置</div>
+        <div class="form-group toggle-row">
+          <input type="checkbox" id="translation_enabled" name="translation_enabled" value="true"
+            {% if feed and feed.translation_enabled %}checked{% endif %}>
+          <label for="translation_enabled" style="margin:0">启用双语翻译</label>
+        </div>
+        <div class="form-group">
+          <label for="ai_provider">AI 翻译提供方</label>
+          <select id="ai_provider" name="ai_provider">
+            <option value="openai" {% if not feed or feed.ai_provider == 'openai' %}selected{% endif %}>OpenAI (GPT-4o mini)</option>
+            <option value="claude" {% if feed and feed.ai_provider == 'claude' %}selected{% endif %}>Anthropic Claude</option>
+          </select>
+        </div>
+
+        <div class="section-title">更新频率</div>
+        <div class="form-group">
+          <div class="interval-options">
+            {% for val, label in [(30, "30分钟"), (60, "1小时"), (120, "2小时"), (360, "6小时"), (1440, "每天")] %}
+            <label>
+              <input type="radio" name="update_interval" value="{{ val }}"
+                {% if (feed and feed.update_interval == val) or (not feed and val == 60) %}checked{% endif %}>
+              {{ label }}
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">保存</button>
+      <a href="/" class="btn btn-secondary">取消</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
