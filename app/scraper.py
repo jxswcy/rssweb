@@ -1,10 +1,13 @@
 import asyncio
+import logging
 from urllib.parse import urljoin, urlparse
 from typing import Optional
 
 import httpx
 import trafilatura
 from bs4 import BeautifulSoup
+
+logger = logging.getLogger(__name__)
 
 HEADERS = {
     "User-Agent": (
@@ -32,6 +35,12 @@ async def fetch_article_list(
     if title_selector and link_selector:
         title_tags = soup.select(title_selector)
         link_tags = soup.select(link_selector)
+        if len(title_tags) != len(link_tags):
+            logger.warning(
+                "title_selector matched %d elements but link_selector matched %d; "
+                "extra elements will be ignored",
+                len(title_tags), len(link_tags),
+            )
         results = []
         for t, l in zip(title_tags, link_tags):
             href = l.get("href", "")
@@ -81,6 +90,7 @@ async def fetch_article_content(
         tag = soup.select_one(content_selector)
         if tag:
             return str(tag)
+        logger.warning("content_selector %r matched nothing for %s, falling back to trafilatura", content_selector, url)
 
     # 降级：trafilatura 自动提取
     extracted = trafilatura.extract(html, include_formatting=True)

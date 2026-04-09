@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
-from app.scraper import fetch_article_list, fetch_article_content
+from app.scraper import fetch_article_list, fetch_article_content, fetch_articles_concurrently
 
 SAMPLE_LIST_HTML = """
 <html><body>
@@ -75,3 +75,45 @@ async def test_fetch_article_content_fallback_trafilatura():
             )
 
     assert content == "Extracted text"
+
+
+@pytest.mark.asyncio
+async def test_fetch_articles_concurrently_success():
+    """多篇文章并发抓取，所有成功"""
+    stubs = [
+        {"title": "Article 1", "url": "https://example.com/1"},
+        {"title": "Article 2", "url": "https://example.com/2"},
+    ]
+    with patch("app.scraper.fetch_article_content", new_callable=AsyncMock) as mock_fetch:
+        mock_fetch.return_value = "<p>content</p>"
+        with patch("asyncio.sleep", new_callable=AsyncMock):
+            results = await fetch_articles_concurrently(stubs, content_selector=None)
+
+    assert len(results) == 2
+    assert results[0]["content"] == "<p>content</p>"
+    assert results[0]["title"] == "Article 1"
+    assert results[1]["title"] == "Article 2"
+
+
+@pytest.mark.asyncio
+async def test_fetch_articles_concurrently_partial_failure():
+    """单篇失败不影响其他篇"""
+    stubs = [
+        {"title": "Good", "url": "https://example.com/good"},
+        {"title": "Bad", "url": "https://example.com/bad"},
+    ]
+
+    async def mock_fetch(url, content_selector):
+        if "bad" in url:
+            raise Exception("fetch error")
+        return "<p>good content</p>"
+
+    with patch("app.scraper.fetch_article_content", side_effect=mock_fetch):
+        with patch("asyncio.sleep", new_callable=AsyncMock):
+            results = await fetch_articles_concurrently(stubs, content_selector=None)
+
+    assert len(results) == 2
+    good = next(r for r in results if r["title"] == "Good")
+    bad = next(r for r in results if r["title"] == "Bad")
+    assert good["content"] == "<p>good content</p>"
+    assert "失败" in bad["content"] or "error" in bad["content"].lower()
