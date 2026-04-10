@@ -45,12 +45,14 @@ def init_db():
             "ALTER TABLE feeds ADD COLUMN feed_type TEXT DEFAULT 'webpage'",
             "ALTER TABLE articles ADD COLUMN published_at DATETIME",
             "ALTER TABLE articles ADD COLUMN order_index INTEGER",
+            # 索引迁移（幂等）
+            "CREATE INDEX IF NOT EXISTS ix_articles_feed_order ON articles(feed_id, order_index)",
         ]:
             try:
                 conn.execute(text(ddl))
                 conn.commit()
             except Exception:
-                pass  # 字段已存在则忽略
+                pass  # 字段/索引已存在则忽略
 
     # 写入默认管理员密码（首次初始化时）
     from passlib.context import CryptContext

@@ -1,14 +1,16 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from sqlalchemy import (
     Column, Integer, Text, Boolean, DateTime, ForeignKey,
-    UniqueConstraint,
+    UniqueConstraint, Index,
 )
 from sqlalchemy.orm import relationship
 from app.database import Base
+from app.constants import TZ_SHANGHAI
 
 
 def _now():
-    return datetime.now(timezone.utc)
+    """返回当前东8区时间，确保入库时间统一为东8区"""
+    return datetime.now(TZ_SHANGHAI)
 
 
 class Feed(Base):
@@ -38,6 +40,7 @@ class Article(Base):
     __tablename__ = "articles"
     __table_args__ = (
         UniqueConstraint("feed_id", "url", name="uq_feed_url"),
+        Index("ix_articles_feed_order", "feed_id", "order_index"),
     )
 
     id = Column(Integer, primary_key=True, index=True)

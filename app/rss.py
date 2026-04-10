@@ -1,20 +1,19 @@
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from feedgen.feed import FeedGenerator
 from bs4 import BeautifulSoup
-from app.models import Feed, Article
 
-# 东8区时区
-TZ_SHANGHAI = timezone(timedelta(hours=8))
+from app.constants import TZ_SHANGHAI
+from app.models import Feed, Article
 
 
 def _to_shanghai(dt: datetime) -> datetime:
-    """将时间转换为东8区"""
+    """确保时间带有时区信息。入库时间已统一为东8区，只需补上时区标记。"""
     if dt is None:
         return datetime.now(TZ_SHANGHAI)
     if dt.tzinfo is None:
-        # 假设无时区的时间是 UTC
-        dt = dt.replace(tzinfo=timezone.utc)
-    return dt.astimezone(TZ_SHANGHAI)
+        # 无时区时间标记为东8区（入库时已是东8区时间）
+        dt = dt.replace(tzinfo=TZ_SHANGHAI)
+    return dt
 
 
 def _interleave_bilingual(original_html: str, translated_html: str) -> str:

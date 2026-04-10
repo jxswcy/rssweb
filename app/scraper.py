@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import xml.etree.ElementTree as ET
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from urllib.parse import urljoin, urlparse
 from typing import Optional
@@ -10,10 +10,9 @@ import httpx
 import trafilatura
 from bs4 import BeautifulSoup
 
-logger = logging.getLogger(__name__)
+from app.constants import TZ_SHANGHAI
 
-# 东8区时区
-TZ_SHANGHAI = timezone(timedelta(hours=8))
+logger = logging.getLogger(__name__)
 
 HEADERS = {
     "User-Agent": (
@@ -206,7 +205,8 @@ def _extract_publish_time(soup: BeautifulSoup) -> Optional[datetime]:
 
     # 统一转换为东8区
     if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=TZ_SHANGHAI)
+        # 无时区时间假设为 UTC，转换为东8区
+        dt = dt.replace(tzinfo=timezone.utc).astimezone(TZ_SHANGHAI)
     else:
         dt = dt.astimezone(TZ_SHANGHAI)
     return dt

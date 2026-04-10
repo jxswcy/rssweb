@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 
+from app.constants import TZ_SHANGHAI
 from app.database import SessionLocal
 from app.models import Feed, Article
 from app.scraper import fetch_article_list, fetch_articles_concurrently, parse_rss_feed
@@ -29,10 +30,10 @@ def start_scheduler():
             # 从未抓取或上次抓取时间已超过 update_interval 的，立即补抓
             last = feed.last_fetched_at
             if last is not None and last.tzinfo is None:
-                last = last.replace(tzinfo=timezone.utc)
+                last = last.replace(tzinfo=TZ_SHANGHAI)
             needs_catchup = (
                 last is None
-                or (datetime.now(timezone.utc) - last) > timedelta(minutes=feed.update_interval)
+                or (datetime.now(TZ_SHANGHAI) - last) > timedelta(minutes=feed.update_interval)
             )
             if needs_catchup:
                 scheduler.add_job(
@@ -343,7 +344,7 @@ def _get_setting(db: Session, key: str) -> Optional[str]:
 
 def _update_feed_fetched(db: Session, feed_id: int):
     db.query(Feed).filter(Feed.id == feed_id).update(
-        {"last_fetched_at": datetime.now(timezone.utc), "last_error": None}
+        {"last_fetched_at": datetime.now(TZ_SHANGHAI), "last_error": None}
     )
     # commit 由调用方负责
 
