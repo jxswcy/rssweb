@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -8,6 +9,13 @@ from app.database import init_db
 from app.routers import feeds, rss_feed, settings
 from app.routers.auth import router as auth_router, _LoginRequired
 from app.scheduler import start_scheduler, stop_scheduler
+
+# 配置日志级别
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 
 templates = Jinja2Templates(directory="app/templates")
 

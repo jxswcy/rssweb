@@ -90,7 +90,9 @@ def remove_feed_job(feed_id: int):
 
 async def run_feed_now(feed_id: int):
     """手动立即触发一次抓取"""
+    logger.info("手动刷新 Feed %d", feed_id)
     await _run_feed_job(feed_id)
+    logger.info("手动刷新 Feed %d 完成", feed_id)
 
 
 async def retranslate_feed(feed_id: int):
@@ -204,14 +206,18 @@ async def _run_feed_job(feed_id: int):
 async def _fetch_and_store(feed_id: int):
     from urllib.parse import urlparse
 
+    logger.info("Feed %d: 开始抓取...", feed_id)
+
     # ── 阶段 1：读取配置（短暂打开 DB，读完即关）──────────────────────────
     db = SessionLocal()
     try:
         feed = db.query(Feed).filter(Feed.id == feed_id).first()
         if not feed:
+            logger.warning("Feed %d: 不存在", feed_id)
             return
         # 提取所有需要的字段，避免 session 关闭后 lazy-load
         feed_id_      = feed.id
+        feed_name     = feed.name
         feed_url      = feed.url
         article_sel   = feed.article_selector
         title_sel     = feed.title_selector
@@ -244,6 +250,9 @@ async def _fetch_and_store(feed_id: int):
     finally:
         db.close()  # ← 读完即关，不持有 session 做 I/O
 
+    logger.info("Feed %d '%s': 翻译=%s 提供方=%s 已有文章=%d",
+               feed_id_, feed_name, trans_enabled, ai_provider, len(existing_urls))
+
     # ── 阶段 2：网络抓取 + AI 翻译（纯 async I/O，不持有 DB）──────────────
     if feed_type == "rss_source":
         stubs = await parse_rss_feed(feed_url)
@@ -258,6 +267,9 @@ async def _fetch_and_store(feed_id: int):
         )
     new_stubs = [s for s in stubs if s["url"] not in existing_urls]
 
+    logger.info("Feed %d '%s': 发现 %d 篇文章，其中 %d 篇为新文章",
+               feed_id_, feed_name, len(stubs), len(new_stubs))
+
     if not new_stubs:
         db = SessionLocal()
         try:
@@ -265,9 +277,14 @@ async def _fetch_and_store(feed_id: int):
             db.commit()
         finally:
             db.close()
+        # 即使没有新文章，也要执行清理
+        await _cleanup_old_articles(feed_id_)
+        logger.info("Feed %d: 无新文章", feed_id_)
         return
 
+    logger.info("Feed %d: 开始抓取 %d 篇新文章正文...", feed_id_, len(new_stubs))
     articles_data = await fetch_articles_concurrently(new_stubs, content_sel)
+    logger.info("Feed %d: 正文抓取完成，开始翻译...", feed_id_)
 
     # ── 阶段 3：逐篇翻译（标题+正文）+立即写库 ──────────────────────────
     saved = 0
@@ -333,10 +350,11 @@ async def _fetch_and_store(feed_id: int):
         db.commit()
     finally:
         db.close()
-    logger.info("Feed %d: stored %d / %d new articles", feed_id_, saved, len(articles_data))
+    logger.info("Feed %d: 保存完成 %d/%d 篇新文章", feed_id_, saved, len(articles_data))
 
     # 清理超限的旧文章
     await _cleanup_old_articles(feed_id_)
+    logger.info("Feed %d: 抓取完成", feed_id_)
 
 
 async def _cleanup_old_articles(feed_id: int):
@@ -357,10 +375,13 @@ async def _cleanup_old_articles(feed_id: int):
         # 统计当前文章数
         total = db.query(Article).filter(Article.feed_id == feed_id).count()
         if total <= max_articles:
+            logger.info("Feed %d: 文章数 %d <= 限制 %d，无需清理", feed_id, total, max_articles)
             return
 
         # 删除最旧的文章（按 fetched_at 排序）
         to_delete = total - max_articles
+        logger.info("Feed %d: 开始清理 %d 篇旧文章（当前 %d 篇，限制 %d 篇）",
+                   feed_id, to_delete, total, max_articles)
         old_articles = (
             db.query(Article)
             .filter(Article.feed_id == feed_id)
@@ -371,8 +392,7 @@ async def _cleanup_old_articles(feed_id: int):
         for article in old_articles:
             db.delete(article)
         db.commit()
-        logger.info("Feed %d: 清理了 %d 篇旧文章（当前 %d 篇，限制 %d 篇）",
-                   feed_id, to_delete, total, max_articles)
+        logger.info("Feed %d: 清理完成，删除了 %d 篇旧文章", feed_id, to_delete)
     except Exception as exc:
         logger.error("Feed %d: 清理旧文章失败: %s", feed_id, exc)
         db.rollback()
