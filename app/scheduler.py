@@ -389,7 +389,12 @@ async def _cleanup_old_articles(feed_id: int):
             .limit(to_delete)
             .all()
         )
+        # 输出将被删除的文章信息
         for article in old_articles:
+            pub_str = article.published_at.strftime("%Y-%m-%d %H:%M") if article.published_at else "无发布时间"
+            fetch_str = article.fetched_at.strftime("%Y-%m-%d %H:%M") if article.fetched_at else "无抓取时间"
+            logger.info("Feed %d: 删除文章 [%s] 发布=%s 抓取=%s",
+                       feed_id, article.title[:50], pub_str, fetch_str)
             db.delete(article)
         db.commit()
         logger.info("Feed %d: 清理完成，删除了 %d 篇旧文章", feed_id, to_delete)
