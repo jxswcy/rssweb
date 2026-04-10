@@ -270,7 +270,7 @@ async def _fetch_and_store(feed_id: int):
 
     # ── 阶段 3：逐篇翻译（标题+正文）+立即写库 ──────────────────────────
     saved = 0
-    for data in articles_data:
+    for idx, data in enumerate(articles_data):
         content_original   = data.get("content", "")
         content_translated: Optional[str] = None
         title_translated:   Optional[str] = None
@@ -314,7 +314,8 @@ async def _fetch_and_store(feed_id: int):
                 url=data["url"],
                 content_original=content_original,
                 content_translated=content_translated,
-                published_at=data.get("published_at"),  # 新增：rss_source 类型携带此字段
+                published_at=data.get("published_at"),
+                order_index=idx,  # 保留原始顺序
             ).on_conflict_do_nothing(index_elements=["feed_id", "url"])
             db.execute(stmt)
             db.commit()

@@ -50,7 +50,7 @@ async def test_fetch_article_content_with_selector():
         MockClient.return_value.__aexit__ = AsyncMock(return_value=False)
         MockClient.return_value.get = AsyncMock(return_value=mock_response)
 
-        content = await fetch_article_content(
+        content, published_at = await fetch_article_content(
             url="https://example.com/post/1",
             content_selector=".content",
         )
@@ -69,7 +69,7 @@ async def test_fetch_article_content_fallback_trafilatura():
         MockClient.return_value.get = AsyncMock(return_value=mock_response)
 
         with patch("app.scraper.trafilatura.extract", return_value="Extracted text"):
-            content = await fetch_article_content(
+            content, published_at = await fetch_article_content(
                 url="https://example.com/post/1",
                 content_selector=None,
             )
@@ -85,7 +85,7 @@ async def test_fetch_articles_concurrently_success():
         {"title": "Article 2", "url": "https://example.com/2"},
     ]
     with patch("app.scraper.fetch_article_content", new_callable=AsyncMock) as mock_fetch:
-        mock_fetch.return_value = "<p>content</p>"
+        mock_fetch.return_value = ("<p>content</p>", None)
         with patch("asyncio.sleep", new_callable=AsyncMock):
             results = await fetch_articles_concurrently(stubs, content_selector=None)
 
@@ -106,7 +106,7 @@ async def test_fetch_articles_concurrently_partial_failure():
     async def mock_fetch(url, content_selector):
         if "bad" in url:
             raise Exception("fetch error")
-        return "<p>good content</p>"
+        return "<p>good content</p>", None
 
     with patch("app.scraper.fetch_article_content", side_effect=mock_fetch):
         with patch("asyncio.sleep", new_callable=AsyncMock):

@@ -49,6 +49,7 @@ class Article(Base):
     content_translated = Column(Text, nullable=True)
     fetched_at = Column(DateTime(timezone=True), nullable=False, default=_now)
     published_at = Column(DateTime(timezone=True), nullable=True)
+    order_index = Column(Integer, nullable=True)  # 文章在页面上的顺序（小号在前）
 
     feed = relationship("Feed", back_populates="articles")
 

@@ -140,7 +140,7 @@ async def preview_content(
 ):
     """HTMX 正文预览端点：抓取指定 URL 的正文并返回 HTML 片段"""
     try:
-        content = await fetch_article_content(
+        content, _ = await fetch_article_content(
             url=article_url,
             content_selector=content_selector or None,
         )
@@ -238,6 +238,26 @@ async def import_feeds(
         "import.html",
         {"request": request, "imported": imported, "errors": errors},
     )
+
+
+@router.post("/feeds/{feed_id}/refresh", response_class=RedirectResponse)
+async def refresh_feed(feed_id: int, db: Session = Depends(get_db), _: None = Depends(require_login)):
+    """手动刷新：立即触发一次抓取"""
+    feed = db.query(Feed).filter(Feed.id == feed_id).first()
+    if not feed:
+        raise HTTPException(status_code=404, detail="Feed not found")
+    await run_feed_now(feed_id)
+    return RedirectResponse(url="/", status_code=303)
+
+
+@router.post("/feeds/{feed_id}/retranslate", response_class=RedirectResponse)
+async def retranslate_feed_route(feed_id: int, db: Session = Depends(get_db), _: None = Depends(require_login)):
+    """补翻译：对未翻译文章重新翻译"""
+    feed = db.query(Feed).filter(Feed.id == feed_id).first()
+    if not feed:
+        raise HTTPException(status_code=404, detail="Feed not found")
+    await retranslate_feed(feed_id)
+    return RedirectResponse(url="/", status_code=303)
 
 
 @router.post("/feeds/{feed_id}", response_class=RedirectResponse)

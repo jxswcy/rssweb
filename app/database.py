@@ -44,6 +44,7 @@ def init_db():
             "ALTER TABLE articles ADD COLUMN title_translated TEXT",
             "ALTER TABLE feeds ADD COLUMN feed_type TEXT DEFAULT 'webpage'",
             "ALTER TABLE articles ADD COLUMN published_at DATETIME",
+            "ALTER TABLE articles ADD COLUMN order_index INTEGER",
         ]:
             try:
                 conn.execute(text(ddl))

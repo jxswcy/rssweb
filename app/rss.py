@@ -1,7 +1,20 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from feedgen.feed import FeedGenerator
 from bs4 import BeautifulSoup
 from app.models import Feed, Article
+
+# 东8区时区
+TZ_SHANGHAI = timezone(timedelta(hours=8))
+
+
+def _to_shanghai(dt: datetime) -> datetime:
+    """将时间转换为东8区"""
+    if dt is None:
+        return datetime.now(TZ_SHANGHAI)
+    if dt.tzinfo is None:
+        # 假设无时区的时间是 UTC
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(TZ_SHANGHAI)
 
 
 def _interleave_bilingual(original_html: str, translated_html: str) -> str:
@@ -48,9 +61,9 @@ def generate_rss_feed(feed: Feed, articles: list[Article], base_url: str) -> byt
 
     updated_dt = feed.last_fetched_at or getattr(feed, "created_at", None)
     if updated_dt is None:
-        updated_dt = datetime.now(timezone.utc)
-    elif updated_dt.tzinfo is None:
-        updated_dt = updated_dt.replace(tzinfo=timezone.utc)
+        updated_dt = datetime.now(TZ_SHANGHAI)
+    else:
+        updated_dt = _to_shanghai(updated_dt)
     fg.updated(updated_dt)
 
     for article in articles:
@@ -60,10 +73,7 @@ def generate_rss_feed(feed: Feed, articles: list[Article], base_url: str) -> byt
         fe.link(href=article.url)
 
         pub = article.published_at or article.fetched_at
-        if pub is None:
-            pub = datetime.now(timezone.utc)
-        elif pub.tzinfo is None:
-            pub = pub.replace(tzinfo=timezone.utc)
+        pub = _to_shanghai(pub)
         fe.published(pub)
         fe.updated(pub)
 

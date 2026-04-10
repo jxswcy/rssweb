@@ -36,6 +36,6 @@ app.include_router(rss_feed.router)
 
 # ── 版本信息页面 ───────────────────────────────────────────────────────────
 
-@app.get("/version", response_class=RedirectResponse)
+@app.get("/version")
 async def version_page(request: Request):
     return templates.TemplateResponse("version.html", {"request": request})

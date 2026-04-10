@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import xml.etree.ElementTree as ET
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from email.utils import parsedate_to_datetime
 from urllib.parse import urljoin, urlparse
 from typing import Optional
@@ -11,6 +11,9 @@ import trafilatura
 from bs4 import BeautifulSoup
 
 logger = logging.getLogger(__name__)
+
+# 东8区时区
+TZ_SHANGHAI = timezone(timedelta(hours=8))
 
 HEADERS = {
     "User-Agent": (
@@ -137,40 +140,94 @@ def _heuristic_extract(soup: BeautifulSoup, base_url: str) -> list[dict]:
 async def fetch_article_content(
     url: str,
     content_selector: Optional[str],
-) -> str:
-    """抓取单篇文章正文，返回 HTML 字符串"""
+) -> tuple[str, Optional[datetime]]:
+    """抓取单篇文章正文和发布时间，返回 (HTML, published_at)"""
     async with httpx.AsyncClient(headers=HEADERS, timeout=30, follow_redirects=True) as client:
         response = await client.get(url)
         response.raise_for_status()
         html = response.text
 
+    soup = BeautifulSoup(html, "html.parser")
+
+    # 尝试提取发布时间
+    published_at = _extract_publish_time(soup)
+
     if content_selector:
-        soup = BeautifulSoup(html, "html.parser")
         tag = soup.select_one(content_selector)
         if tag:
-            return str(tag)
+            return str(tag), published_at
         logger.warning("content_selector %r matched nothing for %s, falling back to trafilatura", content_selector, url)
 
     # 降级：trafilatura 自动提取（output_format="html" 保留段落换行结构）
     extracted = trafilatura.extract(html, output_format="html", include_formatting=True)
-    return extracted or ""
+    return extracted or "", published_at
+
+
+def _extract_publish_time(soup: BeautifulSoup) -> Optional[datetime]:
+    """从 HTML 中提取发布时间，尝试多种常见格式，返回东8区时间"""
+    dt = None
+
+    # 1. <time datetime="...">
+    time_el = soup.find("time")
+    if time_el and time_el.get("datetime"):
+        try:
+            dt = datetime.fromisoformat(time_el["datetime"].replace("Z", "+00:00"))
+        except Exception:
+            pass
+
+    # 2. <meta property="article:published_time" content="...">
+    if dt is None:
+        meta = soup.find("meta", attrs={"property": "article:published_time"})
+        if meta and meta.get("content"):
+            try:
+                dt = datetime.fromisoformat(meta["content"].replace("Z", "+00:00"))
+            except Exception:
+                pass
+
+    # 3. <meta name="publish-date" content="...">
+    if dt is None:
+        for attr in ["publish-date", "publishdate", "pubdate", "date", "dc.date"]:
+            meta = soup.find("meta", attrs={"name": attr})
+            if meta and meta.get("content"):
+                try:
+                    # 尝试 ISO 格式
+                    dt = datetime.fromisoformat(meta["content"].replace("Z", "+00:00"))
+                    break
+                except Exception:
+                    try:
+                        # 尝试 RFC 2822 格式
+                        dt = parsedate_to_datetime(meta["content"])
+                        break
+                    except Exception:
+                        pass
+
+    if dt is None:
+        return None
+
+    # 统一转换为东8区
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=TZ_SHANGHAI)
+    else:
+        dt = dt.astimezone(TZ_SHANGHAI)
+    return dt
 
 
 async def fetch_articles_concurrently(
     article_stubs: list[dict],
     content_selector: Optional[str],
 ) -> list[dict]:
-    """并发抓取多篇文章正文，限制 MAX_CONCURRENCY 并发，每篇间隔 DELAY_BETWEEN_REQUESTS 秒"""
+    """并发抓取多篇文章正文和发布时间，限制 MAX_CONCURRENCY 并发，每篇间隔 DELAY_BETWEEN_REQUESTS 秒"""
     semaphore = asyncio.Semaphore(MAX_CONCURRENCY)
 
     async def _fetch_one(stub: dict) -> dict:
         async with semaphore:
             try:
-                content = await fetch_article_content(stub["url"], content_selector)
+                content, published_at = await fetch_article_content(stub["url"], content_selector)
             except Exception as e:
                 content = f"<p>内容提取失败：{e}</p>"
+                published_at = None
             await asyncio.sleep(DELAY_BETWEEN_REQUESTS)
-            return {**stub, "content": content}
+            return {**stub, "content": content, "published_at": published_at or stub.get("published_at")}
 
     tasks = [_fetch_one(s) for s in article_stubs]
     results = await asyncio.gather(*tasks)
@@ -217,7 +274,9 @@ async def parse_rss_feed(url: str) -> list[dict]:
                 try:
                     published_at = parsedate_to_datetime(pub_el.text.strip())
                     if published_at.tzinfo is None:
-                        published_at = published_at.replace(tzinfo=timezone.utc)
+                        published_at = published_at.replace(tzinfo=TZ_SHANGHAI)
+                    else:
+                        published_at = published_at.astimezone(TZ_SHANGHAI)
                 except Exception:
                     logger.warning("parse_rss_feed: failed to parse pubDate %r for %s", pub_el.text, url)
                     published_at = None
@@ -250,6 +309,10 @@ async def parse_rss_feed(url: str) -> list[dict]:
                     published_at = datetime.fromisoformat(
                         updated_el.text.strip().replace("Z", "+00:00")
                     )
+                    if published_at.tzinfo is None:
+                        published_at = published_at.replace(tzinfo=TZ_SHANGHAI)
+                    else:
+                        published_at = published_at.astimezone(TZ_SHANGHAI)
                 except Exception:
                     logger.warning("parse_rss_feed: failed to parse updated %r for %s", updated_el.text, url)
                     published_at = None
