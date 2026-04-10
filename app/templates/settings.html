@@ -6,12 +6,16 @@
   .api-key-input { font-family: monospace; letter-spacing: 0.04em; }
   .provider-section { margin-top: 1.2rem; padding-top: 0.8rem; border-top: 1px solid #e5e5ea; }
   .provider-title { font-size: 0.85rem; font-weight: 600; color: #3a3a3c; margin-bottom: 0.8rem; padding-bottom: 0.4rem; border-bottom: 1px solid #e5e5ea; }
-  .test-btn { font-size: 0.8rem; padding: 0.25rem 0.7rem; }
-  .save-btn { font-size: 0.8rem; padding: 0.25rem 0.7rem; }
+  .action-btns { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+  .action-btn { font-size: 0.8rem; padding: 0.35rem 0.8rem; border-radius: 4px; cursor: pointer; }
+  .btn-save { background: #34c759; color: #fff; border: none; }
+  .btn-save:hover { background: #2db84e; }
+  .btn-test { background: #f5f5f7; color: #3a3a3c; border: 1px solid #d1d1d6; }
+  .btn-test:hover { background: #e8e8ed; }
   .test-result { margin-top: 0.5rem; min-height: 1.5rem; font-size: 0.85rem; }
   .test-ok { background: #f0fdf4; border: 1px solid #86efac; border-radius: 6px; padding: 0.5rem 0.8rem; }
   .test-error { background: #fff1f2; border: 1px solid #fca5a5; border-radius: 6px; padding: 0.5rem 0.8rem; color: #b91c1c; }
-  .save-ok { background: #f0fdf4; border: 1px solid #86efac; border-radius: 6px; padding: 0.3rem 0.6rem; font-size: 0.8rem; color: #166534; display: inline-block; margin-left: 0.5rem; }
+  .save-ok { background: #f0fdf4; border: 1px solid #86efac; border-radius: 6px; padding: 0.3rem 0.6rem; font-size: 0.8rem; color: #166534; display: inline-block; }
 </style>
 {% endblock %}
 
@@ -62,29 +66,27 @@
             value="{{ openrouter_base_url }}"
             placeholder="https://openrouter.ai/api/v1">
         </div>
-        <div>
-          <button type="button" class="btn btn-primary save-btn"
+        <div class="action-btns">
+          <button type="button" class="action-btn btn-save"
             hx-post="/settings/save-provider"
             hx-vals='{"provider": "openrouter"}'
             hx-include="#openrouter_api_key, #openrouter_base_url"
             hx-target="#save-result-openrouter"
             hx-indicator="#save-spin-openrouter">
-            保存
+            保存配置
           </button>
-          <span id="save-spin-openrouter" class="htmx-indicator" style="font-size:0.8rem;color:#86868b;margin-left:0.4rem;">保存中…</span>
-          <span id="save-result-openrouter"></span>
-        </div>
-        <div style="margin-top:0.5rem;">
-          <button type="button" class="btn btn-secondary test-btn"
+          <button type="button" class="action-btn btn-test"
             hx-post="/settings/test-translation"
             hx-vals='{"provider": "openrouter"}'
             hx-target="#test-result-openrouter"
             hx-indicator="#test-spin-openrouter">
             测试翻译
           </button>
-          <span id="test-spin-openrouter" class="htmx-indicator" style="font-size:0.8rem;color:#86868b;margin-left:0.4rem;">测试中…</span>
-          <div id="test-result-openrouter" class="test-result"></div>
+          <span id="save-spin-openrouter" class="htmx-indicator" style="font-size:0.8rem;color:#86868b;">保存中…</span>
+          <span id="test-spin-openrouter" class="htmx-indicator" style="font-size:0.8rem;color:#86868b;">测试中…</span>
+          <span id="save-result-openrouter"></span>
         </div>
+        <div id="test-result-openrouter" class="test-result"></div>
       </div>
 
       <!-- OpenAI -->
@@ -103,29 +105,27 @@
             value="{{ openai_base_url }}"
             placeholder="https://api.openai.com/v1">
         </div>
-        <div>
-          <button type="button" class="btn btn-primary save-btn"
+        <div class="action-btns">
+          <button type="button" class="action-btn btn-save"
             hx-post="/settings/save-provider"
             hx-vals='{"provider": "openai"}'
             hx-include="#openai_api_key, #openai_base_url"
             hx-target="#save-result-openai"
             hx-indicator="#save-spin-openai">
-            保存
+            保存配置
           </button>
-          <span id="save-spin-openai" class="htmx-indicator" style="font-size:0.8rem;color:#86868b;margin-left:0.4rem;">保存中…</span>
-          <span id="save-result-openai"></span>
-        </div>
-        <div style="margin-top:0.5rem;">
-          <button type="button" class="btn btn-secondary test-btn"
+          <button type="button" class="action-btn btn-test"
             hx-post="/settings/test-translation"
             hx-vals='{"provider": "openai"}'
             hx-target="#test-result-openai"
             hx-indicator="#test-spin-openai">
             测试翻译
           </button>
-          <span id="test-spin-openai" class="htmx-indicator" style="font-size:0.8rem;color:#86868b;margin-left:0.4rem;">测试中…</span>
-          <div id="test-result-openai" class="test-result"></div>
+          <span id="save-spin-openai" class="htmx-indicator" style="font-size:0.8rem;color:#86868b;">保存中…</span>
+          <span id="test-spin-openai" class="htmx-indicator" style="font-size:0.8rem;color:#86868b;">测试中…</span>
+          <span id="save-result-openai"></span>
         </div>
+        <div id="test-result-openai" class="test-result"></div>
       </div>
 
       <!-- Google Gemini -->
@@ -144,29 +144,27 @@
             value="{{ gemini_base_url }}"
             placeholder="https://generativelanguage.googleapis.com/v1beta/openai">
         </div>
-        <div>
-          <button type="button" class="btn btn-primary save-btn"
+        <div class="action-btns">
+          <button type="button" class="action-btn btn-save"
             hx-post="/settings/save-provider"
             hx-vals='{"provider": "gemini"}'
             hx-include="#gemini_api_key, #gemini_base_url"
             hx-target="#save-result-gemini"
             hx-indicator="#save-spin-gemini">
-            保存
+            保存配置
           </button>
-          <span id="save-spin-gemini" class="htmx-indicator" style="font-size:0.8rem;color:#86868b;margin-left:0.4rem;">保存中…</span>
-          <span id="save-result-gemini"></span>
-        </div>
-        <div style="margin-top:0.5rem;">
-          <button type="button" class="btn btn-secondary test-btn"
+          <button type="button" class="action-btn btn-test"
             hx-post="/settings/test-translation"
             hx-vals='{"provider": "gemini"}'
             hx-target="#test-result-gemini"
             hx-indicator="#test-spin-gemini">
             测试翻译
           </button>
-          <span id="test-spin-gemini" class="htmx-indicator" style="font-size:0.8rem;color:#86868b;margin-left:0.4rem;">测试中…</span>
-          <div id="test-result-gemini" class="test-result"></div>
+          <span id="save-spin-gemini" class="htmx-indicator" style="font-size:0.8rem;color:#86868b;">保存中…</span>
+          <span id="test-spin-gemini" class="htmx-indicator" style="font-size:0.8rem;color:#86868b;">测试中…</span>
+          <span id="save-result-gemini"></span>
         </div>
+        <div id="test-result-gemini" class="test-result"></div>
       </div>
 
       <!-- Anthropic Claude -->
@@ -185,29 +183,27 @@
             value="{{ claude_base_url }}"
             placeholder="https://api.anthropic.com">
         </div>
-        <div>
-          <button type="button" class="btn btn-primary save-btn"
+        <div class="action-btns">
+          <button type="button" class="action-btn btn-save"
             hx-post="/settings/save-provider"
             hx-vals='{"provider": "claude"}'
             hx-include="#claude_api_key, #claude_base_url"
             hx-target="#save-result-claude"
             hx-indicator="#save-spin-claude">
-            保存
+            保存配置
           </button>
-          <span id="save-spin-claude" class="htmx-indicator" style="font-size:0.8rem;color:#86868b;margin-left:0.4rem;">保存中…</span>
-          <span id="save-result-claude"></span>
-        </div>
-        <div style="margin-top:0.5rem;">
-          <button type="button" class="btn btn-secondary test-btn"
+          <button type="button" class="action-btn btn-test"
             hx-post="/settings/test-translation"
             hx-vals='{"provider": "claude"}'
             hx-target="#test-result-claude"
             hx-indicator="#test-spin-claude">
             测试翻译
           </button>
-          <span id="test-spin-claude" class="htmx-indicator" style="font-size:0.8rem;color:#86868b;margin-left:0.4rem;">测试中…</span>
-          <div id="test-result-claude" class="test-result"></div>
+          <span id="save-spin-claude" class="htmx-indicator" style="font-size:0.8rem;color:#86868b;">保存中…</span>
+          <span id="test-spin-claude" class="htmx-indicator" style="font-size:0.8rem;color:#86868b;">测试中…</span>
+          <span id="save-result-claude"></span>
         </div>
+        <div id="test-result-claude" class="test-result"></div>
       </div>
 
       <!-- DeepSeek -->
@@ -226,29 +222,27 @@
             value="{{ deepseek_base_url }}"
             placeholder="https://api.deepseek.com">
         </div>
-        <div>
-          <button type="button" class="btn btn-primary save-btn"
+        <div class="action-btns">
+          <button type="button" class="action-btn btn-save"
             hx-post="/settings/save-provider"
             hx-vals='{"provider": "deepseek"}'
             hx-include="#deepseek_api_key, #deepseek_base_url"
             hx-target="#save-result-deepseek"
             hx-indicator="#save-spin-deepseek">
-            保存
+            保存配置
           </button>
-          <span id="save-spin-deepseek" class="htmx-indicator" style="font-size:0.8rem;color:#86868b;margin-left:0.4rem;">保存中…</span>
-          <span id="save-result-deepseek"></span>
-        </div>
-        <div style="margin-top:0.5rem;">
-          <button type="button" class="btn btn-secondary test-btn"
+          <button type="button" class="action-btn btn-test"
             hx-post="/settings/test-translation"
             hx-vals='{"provider": "deepseek"}'
             hx-target="#test-result-deepseek"
             hx-indicator="#test-spin-deepseek">
             测试翻译
           </button>
-          <span id="test-spin-deepseek" class="htmx-indicator" style="font-size:0.8rem;color:#86868b;margin-left:0.4rem;">测试中…</span>
-          <div id="test-result-deepseek" class="test-result"></div>
+          <span id="save-spin-deepseek" class="htmx-indicator" style="font-size:0.8rem;color:#86868b;">保存中…</span>
+          <span id="test-spin-deepseek" class="htmx-indicator" style="font-size:0.8rem;color:#86868b;">测试中…</span>
+          <span id="save-result-deepseek"></span>
         </div>
+        <div id="test-result-deepseek" class="test-result"></div>
       </div>
 
       <!-- 翻译语言 -->

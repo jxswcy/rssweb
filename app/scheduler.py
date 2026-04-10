@@ -215,6 +215,17 @@ async def _fetch_and_store(feed_id: int):
         if not feed:
             logger.warning("Feed %d: 不存在", feed_id)
             return
+
+        # 检查是否在最近 30 秒内已经抓取过，避免重复抓取
+        last = feed.last_fetched_at
+        if last is not None:
+            if last.tzinfo is None:
+                last = last.replace(tzinfo=TZ_SHANGHAI)
+            elapsed = (datetime.now(TZ_SHANGHAI) - last).total_seconds()
+            if elapsed < 30:
+                logger.info("Feed %d: 最近 %.0f 秒前已抓取，跳过本次", feed_id, elapsed)
+                return
+
         # 提取所有需要的字段，避免 session 关闭后 lazy-load
         feed_id_      = feed.id
         feed_name     = feed.name
