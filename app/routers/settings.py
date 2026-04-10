@@ -143,6 +143,53 @@ async def save_settings(
     )
 
 
+@router.post("/settings/save-provider", response_class=HTMLResponse)
+async def save_provider(
+    provider: str = Form(...),
+    api_key: str = Form(""),
+    base_url: str = Form(""),
+    db: Session = Depends(get_db),
+    _: None = Depends(require_login),
+):
+    """HTMX：保存单个供应方的 API Key 和 Base URL"""
+    api_key_field = f"{provider}_api_key"
+    base_url_field = f"{provider}_base_url"
+
+    # 保存 API Key（留空或含掩码字符则跳过）
+    if api_key.strip() and "••••" not in api_key:
+        existing = db.query(Setting).filter(Setting.key == api_key_field).first()
+        if existing:
+            existing.value = api_key.strip()
+        else:
+            db.add(Setting(key=api_key_field, value=api_key.strip()))
+
+    # 保存 Base URL
+    existing_url = db.query(Setting).filter(Setting.key == base_url_field).first()
+    if existing_url:
+        existing_url.value = base_url.strip()
+    else:
+        db.add(Setting(key=base_url_field, value=base_url.strip()))
+
+    db.commit()
+    return HTMLResponse('<span class="save-ok">✓ 已保存</span>')
+
+
+@router.post("/settings/save-lang", response_class=HTMLResponse)
+async def save_lang(
+    translate_target_lang: str = Form(...),
+    db: Session = Depends(get_db),
+    _: None = Depends(require_login),
+):
+    """HTMX：保存翻译目标语言"""
+    existing = db.query(Setting).filter(Setting.key == "translate_target_lang").first()
+    if existing:
+        existing.value = translate_target_lang
+    else:
+        db.add(Setting(key="translate_target_lang", value=translate_target_lang))
+    db.commit()
+    return HTMLResponse('<span class="save-ok">✓ 已保存</span>')
+
+
 @router.post("/settings/test-translation", response_class=HTMLResponse)
 async def test_translation(
     provider: str = Form(...),
