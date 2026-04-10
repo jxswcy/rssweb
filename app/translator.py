@@ -1,4 +1,5 @@
 import logging
+import time
 from urllib.parse import quote
 
 import httpx
@@ -122,18 +123,23 @@ async def translate_text(
     target_lang: str = "zh-CN",
     base_url: str | None = None,
 ) -> str:
-    """翻译文本，失败则返回原文。model 为 None 时使用该提供方默认模型。
+    """翻译文本，失败则抛出异常。model 为 None 时使用该提供方默认模型。
     base_url 非空时覆盖 PROVIDER_BASE_URLS 中的默认值。"""
     if not text:
         return text
 
+    start_time = time.time()
+    text_len = len(text)
+
     # Google 免费翻译：无需 API Key，直接调用公开端点
     if provider == "google_free":
+        logger.info("[翻译] 开始 provider=google_free target=%s length=%d", target_lang, text_len)
         try:
             soup = BeautifulSoup(text, "html.parser")
             paras = soup.find_all("p")
             if paras:
                 # 有段落结构：逐 <p> 翻译，保留原标签属性，内容替换为译文
+                para_count = 0
                 for p in paras:
                     plain = p.get_text(separator=" ").strip()
                     if not plain:
@@ -142,20 +148,28 @@ async def translate_text(
                         translated_text = await _translate_text_google_free(plain, target_lang)
                         p.clear()
                         p.append(translated_text)
+                        para_count += 1
                     except Exception as exc:
-                        logger.warning("google_free: failed to translate paragraph: %s", exc)
+                        logger.warning("[翻译] google_free 段落翻译失败: %s", exc)
+                elapsed = time.time() - start_time
+                logger.info("[翻译] 完成 provider=google_free 段落数=%d 耗时=%.2fs", para_count, elapsed)
                 return str(soup)
             else:
                 # 无段落结构：整块纯文本翻译，原样返回纯文本（不包 <p>）
                 plain = soup.get_text(separator="\n").strip()
                 if not plain:
                     return text
-                return await _translate_text_google_free(plain, target_lang)
+                result = await _translate_text_google_free(plain, target_lang)
+                elapsed = time.time() - start_time
+                logger.info("[翻译] 完成 provider=google_free 耗时=%.2fs", elapsed)
+                return result
         except Exception as exc:
-            logger.error("google_free translation failed: %s", exc, exc_info=True)
-            return text
+            elapsed = time.time() - start_time
+            logger.error("[翻译] 失败 provider=google_free 耗时=%.2fs error=%s", elapsed, exc, exc_info=True)
+            raise
 
     resolved_model = model or PROVIDER_DEFAULT_MODELS.get(provider, "gpt-4o-mini")
+    logger.info("[翻译] 开始 provider=%s model=%s target=%s length=%d", provider, resolved_model, target_lang, text_len)
 
     # 创建客户端（复用连接池）
     if provider in PROVIDER_BASE_URLS:
@@ -178,19 +192,30 @@ async def translate_text(
         raise ValueError(f"Unknown AI provider: {provider}")
 
     chunks = split_text(text)
+    total_chunks = len(chunks)
     translated_chunks = []
-    for chunk in chunks:
+    for i, chunk in enumerate(chunks, 1):
+        chunk_start = time.time()
         try:
             translated = await _translate_chunk(chunk, provider, client, resolved_model, target_lang)
+            chunk_elapsed = time.time() - chunk_start
+            logger.info("[翻译] 分片 %d/%d 完成 输入=%d 输出=%d 耗时=%.2fs",
+                       i, total_chunks, len(chunk), len(translated), chunk_elapsed)
             translated_chunks.append(translated)
         except Exception as exc:
+            elapsed = time.time() - start_time
             logger.error(
-                "Translation failed for provider=%s model=%s target=%s error=%s",
-                provider, resolved_model, target_lang, exc,
+                "[翻译] 失败 provider=%s model=%s target=%s 总耗时=%.2fs error=%s",
+                provider, resolved_model, target_lang, elapsed, exc,
                 exc_info=True,
             )
-            raise  # 重新抛出，让调用方决定如何处理
-    return "".join(translated_chunks)
+            raise
+
+    elapsed = time.time() - start_time
+    result = "".join(translated_chunks)
+    logger.info("[翻译] 完成 provider=%s model=%s 输入=%d 输出=%d 分片=%d 总耗时=%.2fs",
+               provider, resolved_model, text_len, len(result), total_chunks, elapsed)
+    return result
 
 
 async def _translate_chunk(

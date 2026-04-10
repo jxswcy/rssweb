@@ -270,6 +270,27 @@
         </div>
       </div>
 
+      <!-- 文章数量限制 -->
+      <div class="provider-section">
+        <div class="provider-title">文章数量限制</div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label for="max_articles_per_feed">每个订阅最多保留文章数 <span style="font-size:0.75rem;color:#86868b;font-weight:400;">（范围：50-500，默认 100）</span></label>
+          <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.3rem;">
+            <input type="number" id="max_articles_per_feed" name="max_articles_per_feed"
+              value="{{ max_articles_per_feed or 100 }}"
+              min="50" max="500" step="50"
+              style="width:100px;"
+              hx-post="/settings/save-max-articles"
+              hx-trigger="change"
+              hx-target="#save-result-max"
+              hx-indicator="#save-spin-max">
+            <span id="save-spin-max" class="htmx-indicator" style="font-size:0.8rem;color:#86868b;">保存中…</span>
+            <span id="save-result-max"></span>
+          </div>
+          <div style="font-size:0.78rem;color:#86868b;margin-top:0.4rem;">超过限制的旧文章会在下次抓取时自动清理</div>
+        </div>
+      </div>
+
     </div>
   </div>
 

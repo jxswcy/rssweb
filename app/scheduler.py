@@ -335,6 +335,50 @@ async def _fetch_and_store(feed_id: int):
         db.close()
     logger.info("Feed %d: stored %d / %d new articles", feed_id_, saved, len(articles_data))
 
+    # 清理超限的旧文章
+    await _cleanup_old_articles(feed_id_)
+
+
+async def _cleanup_old_articles(feed_id: int):
+    """清理超过限制的旧文章"""
+    from app.models import Setting
+
+    db = SessionLocal()
+    try:
+        # 获取最大文章数设置（默认 100）
+        max_articles = 100
+        setting = db.query(Setting).filter(Setting.key == "max_articles_per_feed").first()
+        if setting and setting.value:
+            try:
+                max_articles = int(setting.value)
+            except ValueError:
+                pass
+
+        # 统计当前文章数
+        total = db.query(Article).filter(Article.feed_id == feed_id).count()
+        if total <= max_articles:
+            return
+
+        # 删除最旧的文章（按 fetched_at 排序）
+        to_delete = total - max_articles
+        old_articles = (
+            db.query(Article)
+            .filter(Article.feed_id == feed_id)
+            .order_by(Article.fetched_at.asc())
+            .limit(to_delete)
+            .all()
+        )
+        for article in old_articles:
+            db.delete(article)
+        db.commit()
+        logger.info("Feed %d: 清理了 %d 篇旧文章（当前 %d 篇，限制 %d 篇）",
+                   feed_id, to_delete, total, max_articles)
+    except Exception as exc:
+        logger.error("Feed %d: 清理旧文章失败: %s", feed_id, exc)
+        db.rollback()
+    finally:
+        db.close()
+
 
 def _get_setting(db: Session, key: str) -> Optional[str]:
     from app.models import Setting

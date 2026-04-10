@@ -29,6 +29,7 @@ SETTING_KEYS = [
     "openrouter_base_url",
     "claude_base_url",
     "gemini_base_url",
+    "max_articles_per_feed",
 ]
 
 
@@ -64,6 +65,7 @@ async def settings_page(request: Request, db: Session = Depends(get_db), _: None
             "openrouter_base_url": current.get("openrouter_base_url", ""),
             "claude_base_url": current.get("claude_base_url", ""),
             "gemini_base_url": current.get("gemini_base_url", ""),
+            "max_articles_per_feed": current.get("max_articles_per_feed", "100"),
             "saved": False,
             "password_error": None,
             "password_saved": False,
@@ -188,6 +190,24 @@ async def save_lang(
         db.add(Setting(key="translate_target_lang", value=translate_target_lang))
     db.commit()
     return HTMLResponse('<span class="save-ok">✓ 已保存</span>')
+
+
+@router.post("/settings/save-max-articles", response_class=HTMLResponse)
+async def save_max_articles(
+    max_articles_per_feed: int = Form(...),
+    db: Session = Depends(get_db),
+    _: None = Depends(require_login),
+):
+    """HTMX：保存每个订阅最大文章数"""
+    # 限制范围 50-500
+    value = max(50, min(500, max_articles_per_feed))
+    existing = db.query(Setting).filter(Setting.key == "max_articles_per_feed").first()
+    if existing:
+        existing.value = str(value)
+    else:
+        db.add(Setting(key="max_articles_per_feed", value=str(value)))
+    db.commit()
+    return HTMLResponse(f'<span class="save-ok">✓ 已保存 ({value} 篇)</span>')
 
 
 @router.post("/settings/test-translation", response_class=HTMLResponse)
