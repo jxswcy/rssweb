@@ -160,9 +160,17 @@ async def translate_text(
     # 创建客户端（复用连接池）
     if provider in PROVIDER_BASE_URLS:
         resolved_base_url = base_url or PROVIDER_BASE_URLS[provider]
+        # OpenRouter 需要额外的 HTTP 头部
+        default_headers = {}
+        if provider == "openrouter":
+            default_headers = {
+                "HTTP-Referer": "https://github.com/jxswcy/rssweb",
+                "X-Title": "RSS Web",
+            }
         client = AsyncOpenAI(
             api_key=api_key,
             base_url=resolved_base_url,
+            default_headers=default_headers if default_headers else None,
         )
     elif provider == "claude":
         client = AsyncAnthropic(api_key=api_key, base_url=base_url) if base_url else AsyncAnthropic(api_key=api_key)
@@ -181,7 +189,7 @@ async def translate_text(
                 provider, resolved_model, target_lang, exc,
                 exc_info=True,
             )
-            return text
+            raise  # 重新抛出，让调用方决定如何处理
     return "".join(translated_chunks)
 
 

@@ -30,6 +30,11 @@ async def test_translate_with_openai():
             target_lang="zh-CN",
         )
     assert result == "你好世界"
+    MockOpenAI.assert_called_once_with(
+        api_key="sk-test",
+        base_url=None,
+        default_headers=None,
+    )
 
 @pytest.mark.asyncio
 async def test_translate_with_claude():
@@ -50,18 +55,19 @@ async def test_translate_with_claude():
     assert result == "你好世界"
 
 @pytest.mark.asyncio
-async def test_translate_returns_original_on_error():
+async def test_translate_raises_on_error():
+    """翻译失败时应该抛出异常，而不是静默返回原文"""
     with patch("app.translator.AsyncOpenAI") as MockOpenAI:
         MockOpenAI.return_value.chat.completions.create = AsyncMock(
             side_effect=Exception("API error")
         )
-        result = await translate_text(
-            text="Hello world",
-            provider="openai",
-            api_key="sk-test",
-            target_lang="zh-CN",
-        )
-    assert result == "Hello world"
+        with pytest.raises(Exception, match="API error"):
+            await translate_text(
+                text="Hello world",
+                provider="openai",
+                api_key="sk-test",
+                target_lang="zh-CN",
+            )
 
 
 @pytest.mark.asyncio
@@ -82,10 +88,11 @@ async def test_translate_with_deepseek():
             target_lang="zh-CN",
         )
     assert result == "你好世界"
-    # 验证使用了正确的 base_url
+    # 验证使用了正确的 base_url 和 default_headers
     MockOpenAI.assert_called_once_with(
         api_key="sk-deepseek-test",
         base_url="https://api.deepseek.com",
+        default_headers=None,
     )
 
 
@@ -107,9 +114,14 @@ async def test_translate_with_openrouter():
             target_lang="zh-CN",
         )
     assert result == "你好世界"
+    # OpenRouter 需要额外的 HTTP 头部
     MockOpenAI.assert_called_once_with(
         api_key="sk-or-test",
         base_url="https://openrouter.ai/api/v1",
+        default_headers={
+            "HTTP-Referer": "https://github.com/jxswcy/rssweb",
+            "X-Title": "RSS Web",
+        },
     )
 
 
@@ -134,3 +146,8 @@ async def test_translate_uses_custom_model():
         )
     call_kwargs = create_mock.call_args.kwargs
     assert call_kwargs["model"] == "gpt-4o"
+    MockOpenAI.assert_called_once_with(
+        api_key="sk-test",
+        base_url=None,
+        default_headers=None,
+    )
