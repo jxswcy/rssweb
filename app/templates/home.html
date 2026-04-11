@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}RSS Web{% endblock %}
+
+{% block extra_style %}
+<style>
+  .hero {
+    min-height: calc(100vh - 200px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: var(--spacing-2xl) var(--spacing-lg);
+  }
+
+  .hero-title {
+    font-size: 3rem;
+    font-weight: 500;
+    margin-bottom: var(--spacing-lg);
+    font-family: "SF Pro Rounded", system-ui, -apple-system, sans-serif;
+    letter-spacing: -0.02em;
+  }
+
+  .hero-subtitle {
+    font-size: 1.25rem;
+    color: var(--stone);
+    max-width: 600px;
+    line-height: 1.6;
+    margin-bottom: var(--spacing-2xl);
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--spacing-xl);
+    max-width: 900px;
+    margin: var(--spacing-2xl) auto 0;
+    padding: 0 var(--spacing-lg);
+  }
+
+  .feature-card {
+    padding: var(--spacing-xl);
+    border-radius: var(--radius-container);
+    background: var(--white);
+    border: 1px solid var(--light-gray);
+  }
+
+  .feature-title {
+    font-size: 1.125rem;
+    font-weight: 500;
+    margin-bottom: var(--spacing-sm);
+    font-family: "SF Pro Rounded", system-ui, -apple-system, sans-serif;
+  }
+
+  .feature-desc {
+    font-size: 0.875rem;
+    color: var(--stone);
+    line-height: 1.6;
+  }
+
+  .footer-links {
+    margin-top: var(--spacing-2xl);
+    display: flex;
+    gap: var(--spacing-xl);
+    font-size: 0.875rem;
+    color: var(--stone);
+  }
+
+  .footer-links a {
+    color: var(--black);
+    text-decoration: none;
+  }
+
+  .footer-links a:hover {
+    text-decoration: underline;
+  }
+
+  @media (max-width: 640px) {
+    .hero-title {
+      font-size: 2rem;
+    }
+    .hero-subtitle {
+      font-size: 1rem;
+    }
+    .hero-actions {
+      flex-direction: column;
+      width: 100%;
+    }
+    .hero-actions .btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hero">
+  <h1 class="hero-title">RSS Web</h1>
+  <p class="hero-subtitle">
+    个人自用的 RSS 转换服务。支持网页抓取和标准 RSS 源订阅，
+    下钻提取完整正文，AI 双语翻译，生成可被任意阅读器订阅的标准 Atom RSS。
+  </p>
+
+  <div class="hero-actions">
+    <a href="/feeds" class="btn btn-primary">订阅管理</a>
+    <a href="/reader" class="btn btn-secondary">阅读器</a>
+  </div>
+
+  <div class="features">
+    <div class="feature-card">
+      <div class="feature-title">网页转 RSS</div>
+      <div class="feature-desc">输入任意网页 URL 和抓取规则，自动提取文章列表生成 RSS 订阅源。</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-title">RSS 源订阅</div>
+      <div class="feature-desc">直接订阅标准 RSS/Atom 源，支持下钻抓取完整正文。</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-title">AI 双语翻译</div>
+      <div class="feature-desc">支持 Google、OpenAI、Gemini、DeepSeek、Claude 等多种翻译引擎。</div>
+    </div>
+  </div>
+
+  <div class="footer-links">
+    <a href="/settings">设置</a>
+    <a href="/version">版本信息</a>
+    <a href="https://github.com/jxswcy/rssweb" target="_blank">GitHub</a>
+  </div>
+</div>
+{% endblock %}

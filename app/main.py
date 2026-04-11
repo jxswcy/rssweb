@@ -43,6 +43,13 @@ app.include_router(settings.router)
 app.include_router(rss_feed.router)
 
 
+# ── 首页 ─────────────────────────────────────────────────────────────────────
+
+@app.get("/")
+async def home(request: Request):
+    return templates.TemplateResponse("home.html", {"request": request})
+
+
 # ── 版本信息页面 ───────────────────────────────────────────────────────────
 
 @app.get("/version")
