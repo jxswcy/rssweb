@@ -71,7 +71,7 @@
       border-bottom: 1px solid var(--light-gray);
     }
 
-    nav a {
+    nav .brand {
       color: var(--black);
       text-decoration: none;
       font-weight: 500;
@@ -79,13 +79,25 @@
       font-family: "SF Pro Rounded", system-ui, -apple-system, system-ui, sans-serif;
     }
 
-    nav .nav-links a {
-      margin-left: var(--spacing-xl);
-      font-weight: 400;
-      opacity: 0.7;
+    nav .nav-links {
+      display: flex;
+      gap: var(--spacing-sm);
     }
 
-    nav .nav-links a:hover { opacity: 1; }
+    nav .nav-links a {
+      padding: 6px 14px;
+      border: 1px solid var(--light-gray);
+      border-radius: var(--radius-pill);
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--black);
+      text-decoration: none;
+      transition: background 0.15s ease;
+    }
+
+    nav .nav-links a:hover {
+      background: var(--snow);
+    }
 
     /* === Main Content === */
     main {
@@ -400,9 +412,9 @@
 </head>
 <body>
   <nav>
-    <a href="/">RSS Web</a>
+    <a href="/" class="brand">RSS Web</a>
     <div class="nav-links">
-      <a href="/reader">阅读</a>
+      <a href="/reader">阅读器</a>
       <a href="/feeds">订阅管理</a>
       <a href="/settings">设置</a>
       <a href="/version">版本</a>
