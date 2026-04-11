@@ -55,6 +55,7 @@ class Article(Base):
     order_index = Column(Integer, nullable=True)  # 文章在页面上的顺序（小号在前）
 
     feed = relationship("Feed", back_populates="articles")
+    read_status = relationship("ReadStatus", back_populates="article", uselist=False)
 
 
 class Setting(Base):
@@ -62,3 +63,18 @@ class Setting(Base):
 
     key = Column(Text, primary_key=True)
     value = Column(Text, nullable=True)
+
+
+class ReadStatus(Base):
+    """文章已读状态记录"""
+    __tablename__ = "read_status"
+    __table_args__ = (
+        UniqueConstraint("article_id", name="uq_read_status_article"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    article_id = Column(Integer, ForeignKey("articles.id", ondelete="CASCADE"), nullable=False)
+    is_read = Column(Boolean, nullable=False, default=True)
+    read_at = Column(DateTime(timezone=True), nullable=False, default=_now)
+
+    article = relationship("Article", back_populates="read_status")

@@ -95,6 +95,12 @@
       width: 100%;
     }
 
+    /* 全宽布局（阅读页面） */
+    main.full-width {
+      max-width: none;
+      padding: 0;
+    }
+
     /* === Typography === */
     h1, h2, h3 {
       font-family: "SF Pro Rounded", system-ui, -apple-system, system-ui, sans-serif;
@@ -396,12 +402,13 @@
   <nav>
     <a href="/">RSS Web</a>
     <div class="nav-links">
+      <a href="/reader">阅读</a>
       <a href="/">订阅管理</a>
       <a href="/settings">设置</a>
       <a href="/version">版本</a>
     </div>
   </nav>
-  <main>
+  <main class="{% block main_class %}{% endblock %}">
     {% block content %}{% endblock %}
   </main>
   <footer>

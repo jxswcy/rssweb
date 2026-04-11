@@ -1,0 +1,17 @@
+{% if feeds %}
+  {% for feed in feeds %}
+  <div class="feed-item"
+    data-feed-id="{{ feed.id }}"
+    onclick="selectFeed({{ feed.id }}, '{{ feed.name | e }}')">
+    <span class="feed-name">{{ feed.name }}</span>
+    {% if unread_counts.get(feed.id, 0) > 0 %}
+    <span class="unread-badge">{{ unread_counts[feed.id] }}</span>
+    {% endif %}
+  </div>
+  {% endfor %}
+{% else %}
+<div class="empty-state">
+  <p>暂无订阅源</p>
+  <a href="/feeds/new" class="btn btn-primary">添加订阅</a>
+</div>
+{% endif %}

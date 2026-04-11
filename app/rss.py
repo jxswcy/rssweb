@@ -24,22 +24,22 @@ def _interleave_bilingual(original_html: str, translated_html: str) -> str:
     # 无段落结构时退回整块显示
     if not orig_paras:
         return (
-            f"<p>{original_html}</p>"
-            f'<p style="color:#666;font-style:italic;">{translated_html}</p>'
+            f'<p style="color:#666;font-style:italic;">{original_html}</p>'
+            f"<p>{translated_html}</p>"
         )
 
-    trans_style = "color:#555;font-style:italic;margin-top:2px;margin-bottom:14px;"
+    orig_style = "color:#555;font-style:italic;margin-top:2px;margin-bottom:14px;"
 
     def _styled_p(tag) -> str:
-        """给 BeautifulSoup <p> 标签追加译文样式"""
+        """给 BeautifulSoup <p> 标签追加原文样式"""
         existing = tag.get("style", "")
-        tag["style"] = (existing + ";" + trans_style).lstrip(";")
+        tag["style"] = (existing + ";" + orig_style).lstrip(";")
         return str(tag)
 
     parts = []
     for op, tp in zip(orig_paras, trans_paras):
-        parts.append(str(op))
-        parts.append(_styled_p(tp))
+        parts.append(_styled_p(op))
+        parts.append(str(tp))
 
     for op in orig_paras[len(trans_paras):]:
         parts.append(str(op))

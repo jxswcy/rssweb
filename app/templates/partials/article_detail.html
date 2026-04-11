@@ -1,0 +1,32 @@
+<div class="article-header">
+  <h1>{{ article.title_translated or article.title }}</h1>
+  <div class="article-source">
+    <a href="{{ article.url }}" target="_blank" rel="noopener">原文链接</a>
+    {% if article.published_at %}
+      · {{ article.published_at.strftime('%Y-%m-%d %H:%M') }}
+    {% endif %}
+    · {{ article.feed.name }}
+  </div>
+  <div class="article-actions">
+    <a href="{{ article.url }}" target="_blank" rel="noopener" class="btn">在新窗口打开</a>
+    <button class="btn" hx-post="/reader/articles/{{ article.id }}/unread"
+      hx-target="#read-status-{{ article.id }}"
+      hx-swap="innerHTML">
+      标记未读
+    </button>
+    <span id="read-status-{{ article.id }}"></span>
+  </div>
+</div>
+
+<div class="article-content">
+  {% if bilingual_content %}
+    {{ bilingual_content | safe }}
+  {% elif article.content_translated %}
+    {{ article.content_translated | safe }}
+  {% elif article.content_original %}
+    {{ article.content_original | safe }}
+  {% else %}
+    <p style="color:var(--stone);">暂无正文内容</p>
+    <p><a href="{{ article.url }}" target="_blank">前往原文查看</a></p>
+  {% endif %}
+</div>

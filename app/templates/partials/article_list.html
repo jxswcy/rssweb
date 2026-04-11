@@ -1,0 +1,30 @@
+<div style="display:flex;flex-direction:column;">
+{% if articles %}
+  {% for article in articles %}
+  <div class="article-item{% if not article.read_status or not article.read_status.is_read %} unread{% endif %}"
+    data-article-id="{{ article.id }}"
+    onclick="selectArticle({{ article.id }})">
+    <div class="article-unread-dot"></div>
+    <div class="article-content-wrapper">
+      <div class="article-title">
+        {{ article.title_translated or article.title }}
+      </div>
+      <div class="article-meta">
+        {% if article.published_at %}
+          {{ article.published_at.strftime('%Y-%m-%d %H:%M') }}
+        {% else %}
+          {{ article.fetched_at.strftime('%Y-%m-%d %H:%M') }}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+{% else %}
+<div class="empty-state">
+  <p>暂无{% if unread_only %}未读{% endif %}文章</p>
+  {% if unread_only and feed %}
+  <button class="btn" onclick="showAllArticles()">显示全部文章</button>
+  {% endif %}
+</div>
+{% endif %}
+</div>
