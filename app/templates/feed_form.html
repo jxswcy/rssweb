@@ -3,33 +3,133 @@
 
 {% block extra_style %}
 <style>
-  .form-card { max-width: 640px; margin: 0 auto; }
-  .section-title { font-size: 1rem; font-weight: 600; color: #3a3a3c; margin: 1.2rem 0 0.8rem; border-top: 1px solid #e5e5ea; padding-top: 1rem; }
-  .preview-box { margin-top: 0.8rem; min-height: 60px; background: #f5f5f7; border-radius: 8px; padding: 0.8rem 1rem; }
-  .preview-list { list-style: none; }
-  .preview-list li { padding: 0.3rem 0; border-bottom: 1px solid #e5e5ea; font-size: 0.88rem; }
-  .preview-list a { color: #667eea; text-decoration: none; }
-  .preview-empty, .preview-error { font-size: 0.88rem; color: #86868b; }
-  .preview-error { color: #ff3b30; }
-  .content-preview { font-size: 0.88rem; line-height: 1.6; max-height: 400px; overflow-y: auto; }
-  .content-preview p { margin: 0.5rem 0; }
-  .content-preview h1, .content-preview h2, .content-preview h3 { margin: 0.8rem 0 0.4rem; font-size: 1rem; font-weight: 600; }
-  .content-preview ul, .content-preview ol { padding-left: 1.2rem; margin: 0.5rem 0; }
-  .content-preview li { margin: 0.2rem 0; }
-  .form-actions { display: flex; gap: 0.8rem; margin-top: 1.5rem; }
-  .interval-options { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-  .interval-options label { display: flex; align-items: center; gap: 0.3rem; font-weight: 400; cursor: pointer; }
-  .model-row { display: flex; gap: 0.6rem; align-items: flex-start; }
-  .model-row select { flex: 0 0 160px; }
-  .model-row input { flex: 1; }
+  .section-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--stone);
+    margin: var(--spacing-xl) 0 var(--spacing-md);
+    border-top: 1px solid var(--light-gray);
+    padding-top: var(--spacing-lg);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .preview-box {
+    margin-top: var(--spacing-md);
+    min-height: 60px;
+    background: var(--snow);
+    border-radius: var(--radius-container);
+    padding: var(--spacing-md);
+    border: 1px solid var(--light-gray);
+  }
+  .preview-list {
+    list-style: none;
+  }
+  .preview-list li {
+    padding: 6px 0;
+    border-bottom: 1px solid var(--light-gray);
+    font-size: 14px;
+  }
+  .preview-list li:last-child {
+    border-bottom: none;
+  }
+  .preview-list a {
+    color: var(--black);
+    text-decoration: none;
+  }
+  .preview-list a:hover {
+    text-decoration: underline;
+  }
+  .preview-empty, .preview-error {
+    font-size: 14px;
+    color: var(--stone);
+  }
+  .preview-error {
+    color: var(--mid-gray);
+  }
+  .content-preview {
+    font-size: 14px;
+    line-height: 1.6;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+  .content-preview p {
+    margin: 6px 0;
+  }
+  .content-preview h1, .content-preview h2, .content-preview h3 {
+    margin: 10px 0 4px;
+    font-size: 16px;
+    font-weight: 500;
+  }
+  .content-preview ul, .content-preview ol {
+    padding-left: 1rem;
+    margin: 6px 0;
+  }
+  .content-preview li {
+    margin: 2px 0;
+  }
+  .form-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-xl);
+  }
+  .interval-options {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+  }
+  .interval-options label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 400;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .model-row {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: flex-start;
+  }
+  .model-row .dropdown {
+    flex: 0 0 200px;
+    min-width: 0;
+  }
+  .model-row input {
+    flex: 1;
+  }
+  .candidate-item {
+    cursor: pointer;
+    background: var(--snow);
+    border: 1px solid var(--light-gray);
+    border-radius: var(--radius-container);
+    padding: 8px 12px;
+    font-size: 14px;
+    transition: border-color 0.15s;
+  }
+  .candidate-item:hover {
+    border-color: var(--stone);
+  }
+  .candidate-item.selected {
+    border-color: var(--black);
+    background: var(--white);
+  }
+  .candidate-item .label {
+    color: var(--silver);
+    font-size: 12px;
+    margin-bottom: 4px;
+  }
+  .candidate-item code {
+    word-break: break-all;
+    color: var(--black);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="form-card">
-  <h1 style="font-size:1.5rem;font-weight:700;margin-bottom:1.2rem;">
-    {% if feed %}编辑订阅{% else %}新建订阅{% endif %}
-  </h1>
+<div class="page-title">
+  {% if feed %}编辑订阅{% else %}新建订阅{% endif %}
+</div>
 
   {% if error %}
   <div class="alert alert-error">{{ error }}</div>
@@ -40,14 +140,14 @@
       <div class="card-body">
         <div class="form-group">
           <label>订阅类型</label>
-          <div style="display:flex;gap:1.5rem;margin-top:0.3rem;">
-            <label style="font-weight:400;cursor:pointer;">
+          <div style="display:flex;gap:1.5rem;margin-top:6px;">
+            <label style="font-weight:400;cursor:pointer;font-size:16px;">
               <input type="radio" name="feed_type" value="webpage"
                 {% if not feed or feed.feed_type == 'webpage' %}checked{% endif %}
                 onchange="onFeedTypeChange(this.value)">
               网页抓取
             </label>
-            <label style="font-weight:400;cursor:pointer;">
+            <label style="font-weight:400;cursor:pointer;font-size:16px;">
               <input type="radio" name="feed_type" value="rss_source"
                 {% if feed and feed.feed_type == 'rss_source' %}checked{% endif %}
                 onchange="onFeedTypeChange(this.value)">
@@ -76,12 +176,12 @@
           <input type="text" id="sample_selector_2" autocomplete="off"
             placeholder="再复制另一篇文章的 Selector，系统自动提取共同规则">
         </div>
-        <div id="derived-row" style="display:none;margin-top:0.6rem;">
-          <label style="font-size:0.85rem;font-weight:600;color:#3a3a3c;">推荐 Selector（点击选用）</label>
-          <div id="derived-candidates" style="margin-top:0.4rem;display:flex;flex-direction:column;gap:0.4rem;"></div>
+        <div id="derived-row" style="display:none;margin-top:10px;">
+          <label style="font-size:14px;font-weight:500;color:var(--stone);">推荐 Selector（点击选用）</label>
+          <div id="derived-candidates" style="margin-top:8px;display:flex;flex-direction:column;gap:8px;"></div>
         </div>
         <div class="form-group">
-          <label for="article_selector">通用 Selector <span style="font-size:0.75rem;color:#86868b;font-weight:400;">（可手动输入或由上方自动填入）</span></label>
+          <label for="article_selector">通用 Selector <span style="font-size:12px;color:var(--silver);font-weight:400;">（可手动输入或由上方自动填入）</span></label>
           <input type="text" id="article_selector" name="article_selector"
             value="{{ feed.article_selector if feed and feed.article_selector else '' }}"
             placeholder="li.wp-block-post 或 article.post 等">
@@ -90,14 +190,14 @@
 
         </div>
 
-        <button type="button" class="btn btn-secondary"
+        <button type="button" class="btn"
           hx-post="/feeds/preview"
           hx-include="#url,#article_selector,input[name='feed_type']:checked"
           hx-target="#preview-box"
           hx-indicator="#preview-spinner">
           预览文章列表
         </button>
-        <span id="preview-spinner" class="htmx-indicator" style="font-size:0.85rem;color:#86868b;margin-left:0.5rem;">加载中…</span>
+        <span id="preview-spinner" class="htmx-indicator" style="margin-left:8px;">加载中…</span>
         <div id="preview-box" class="preview-box"></div>
 
         <div class="section-title">正文抓取</div>
@@ -108,39 +208,43 @@
             placeholder=".article-content">
           <div class="hint">留空则使用 trafilatura 自动提取正文</div>
         </div>
-        <div style="margin-bottom:0.6rem;">
-          <label for="preview_article_url" style="font-size:0.85rem;color:#3a3a3c;">预览用文章 URL</label>
+        <div style="margin-bottom:10px;">
+          <label for="preview_article_url" style="font-size:14px;color:var(--stone);">预览用文章 URL</label>
           <input type="url" id="preview_article_url" name="article_url" autocomplete="off"
             placeholder="粘贴一篇文章的链接，点击下方按钮预览正文抓取效果"
-            style="margin-top:0.3rem;">
+            style="margin-top:6px;">
         </div>
-        <button type="button" class="btn btn-secondary"
+        <button type="button" class="btn"
           hx-post="/feeds/preview-content"
           hx-include="#preview_article_url,#content_selector"
           hx-target="#content-preview-box"
           hx-indicator="#content-preview-spinner">
           预览正文
         </button>
-        <span id="content-preview-spinner" class="htmx-indicator" style="font-size:0.85rem;color:#86868b;margin-left:0.5rem;">加载中…</span>
-        <div id="content-preview-box" class="preview-box" style="margin-top:0.8rem;"></div>
+        <span id="content-preview-spinner" class="htmx-indicator" style="margin-left:8px;">加载中…</span>
+        <div id="content-preview-box" class="preview-box" style="margin-top:12px;"></div>
 
         <div class="section-title">翻译</div>
         <div class="form-group toggle-row">
           <input type="checkbox" id="translation_enabled" name="translation_enabled" value="true"
             {% if feed and feed.translation_enabled %}checked{% endif %}>
-          <label for="translation_enabled" style="margin:0">启用双语翻译</label>
+          <label for="translation_enabled" style="margin:0;font-size:16px;">启用双语翻译</label>
         </div>
         <div class="form-group">
           <label>翻译提供方 &amp; 模型</label>
           <div class="model-row">
-            <select id="ai_provider" name="ai_provider" onchange="onProviderChange(this.value)" style="flex:0 0 200px;min-width:0;">
-              <option value="google_free" {% if not feed or feed.ai_provider == 'google_free' %}selected{% endif %}>Google 翻译（免费）</option>
-              <option value="openrouter"  {% if feed and feed.ai_provider == 'openrouter' %}selected{% endif %}>OpenRouter（推荐）</option>
-              <option value="openai"      {% if feed and feed.ai_provider == 'openai' %}selected{% endif %}>OpenAI</option>
-              <option value="gemini"      {% if feed and feed.ai_provider == 'gemini' %}selected{% endif %}>Google Gemini</option>
-              <option value="claude"      {% if feed and feed.ai_provider == 'claude' %}selected{% endif %}>Anthropic Claude</option>
-              <option value="deepseek"    {% if feed and feed.ai_provider == 'deepseek' %}selected{% endif %}>DeepSeek</option>
-            </select>
+            <div class="dropdown" id="ai-provider-dropdown">
+              <input type="hidden" id="ai_provider" name="ai_provider" value="{% if feed and feed.ai_provider %}{{ feed.ai_provider }}{% else %}google_free{% endif %}">
+              <button type="button" class="dropdown-btn">{% if feed and feed.ai_provider == 'openrouter' %}OpenRouter（推荐）{% elif feed and feed.ai_provider == 'openai' %}OpenAI{% elif feed and feed.ai_provider == 'gemini' %}Google Gemini{% elif feed and feed.ai_provider == 'claude' %}Anthropic Claude{% elif feed and feed.ai_provider == 'deepseek' %}DeepSeek{% else %}Google 翻译（免费）{% endif %}</button>
+              <div class="dropdown-menu">
+                <div class="dropdown-item {% if not feed or feed.ai_provider == 'google_free' %}selected{% endif %}" data-value="google_free">Google 翻译（免费）</div>
+                <div class="dropdown-item {% if feed and feed.ai_provider == 'openrouter' %}selected{% endif %}" data-value="openrouter">OpenRouter（推荐）</div>
+                <div class="dropdown-item {% if feed and feed.ai_provider == 'openai' %}selected{% endif %}" data-value="openai">OpenAI</div>
+                <div class="dropdown-item {% if feed and feed.ai_provider == 'gemini' %}selected{% endif %}" data-value="gemini">Google Gemini</div>
+                <div class="dropdown-item {% if feed and feed.ai_provider == 'claude' %}selected{% endif %}" data-value="claude">Anthropic Claude</div>
+                <div class="dropdown-item {% if feed and feed.ai_provider == 'deepseek' %}selected{% endif %}" data-value="deepseek">DeepSeek</div>
+              </div>
+            </div>
             <input type="text" id="ai_model" name="ai_model" list="model-suggestions"
               value="{{ feed.ai_model if feed and feed.ai_model else '' }}"
               placeholder="模型名称（留空使用默认，Google 翻译无需填写）">
@@ -169,9 +273,8 @@
       <a href="/" class="btn btn-secondary">取消</a>
     </div>
   </form>
-</div>
 
-<!-- 虚拟表单：仅用于将 preview_article_url 从主表单排除，防止提交时 name 冲突 -->
+<!-- Dummy form for HTMX -->
 <form id="htmx-dummy" style="display:none;"></form>
 
 <script>
@@ -183,30 +286,18 @@ const PROVIDER_MODELS = {
   },
   openrouter: {
     models: [
-      // OpenAI
       "openai/gpt-4o", "openai/gpt-4o-mini", "openai/gpt-4.1", "openai/gpt-4.1-mini",
-      // Google Gemini
       "google/gemini-2.5-pro-preview", "google/gemini-2.0-flash", "google/gemini-flash-1.5",
-      // Anthropic Claude
       "anthropic/claude-opus-4", "anthropic/claude-sonnet-4-5",
       "anthropic/claude-3.5-sonnet", "anthropic/claude-3.5-haiku",
-      // DeepSeek
       "deepseek/deepseek-chat-v3-0324", "deepseek/deepseek-r1",
-      // Microsoft / Azure OpenAI
       "microsoft/phi-4-multimodal-instruct", "microsoft/phi-4",
-      // 智谱 GLM
       "thudm/glm-4-32b", "thudm/glm-z1-32b",
-      // 阿里 Qwen
       "qwen/qwen-2.5-72b-instruct", "qwen/qwen-2.5-7b-instruct", "qwen/qwq-32b",
-      // 字节 豆包
       "bytedance-research/ui-tars-72b",
-      // 腾讯 混元
       "tencent/hunyuan-a13b-instruct",
-      // Kimi
       "moonshotai/moonlight-16b-a3b-instruct", "moonshotai/kimi-vl-a3b-thinking",
-      // MiniMax
       "minimax/minimax-01",
-      // Meta LLaMA
       "meta-llama/llama-3.3-70b-instruct"
     ],
     default: "openai/gpt-4o-mini"
@@ -251,28 +342,27 @@ function onProviderChange(provider) {
 
   modelInput.disabled = false;
 
-  // 更新 datalist
+  // Update datalist
   datalist.innerHTML = info.models
     .map(m => `<option value="${m}">`)
     .join("");
 
-  // 填入默认模型
+  // Fill default model
   modelInput.value = info.default;
   modelInput.placeholder = `默认: ${info.default}`;
 
-  // 更新提示
+  // Update hint
   hint.textContent = `推荐模型（从高到低）：${info.models.join("、")}`;
 }
 
-// ── Selector 推导逻辑 ──────────────────────────────────────────
-// 动态类模式：文章/页面特有，无论两篇文章是否共享，都应剔除
+// ── Selector Derivation Logic ──────────────────────────────────────────
 const DYNAMIC_CLASS_PATTERNS = [
-  /^post-\d+$/,       // WordPress 文章 ID，如 post-3110530
-  /^category-/,       // WordPress 分类，如 category-artificial-intelligence
-  /^tag-/,            // WordPress 标签，如 tag-chatgpt
-  /^author-/,         // WordPress 作者
-  /^page-id-\d+$/,    // 页面 ID
-  /[a-f0-9]{6,}$/,    // 动态哈希后缀，如 wp-container-...-28f84493
+  /^post-\d+$/,
+  /^category-/,
+  /^tag-/,
+  /^author-/,
+  /^page-id-\d+$/,
+  /[a-f0-9]{6,}$/,
 ];
 
 function isDynamic(cls) {
@@ -293,7 +383,6 @@ function parseSegment(seg) {
 
 function mergeSegments(s1, s2) {
   if (s1 === s2) {
-    // 即使两段相同，也要清理动态类
     const p = parseSegment(s1);
     if (!p.classes.length) return s1;
     const stable = p.classes.filter(c => !isDynamic(c));
@@ -302,7 +391,6 @@ function mergeSegments(s1, s2) {
   const p1 = parseSegment(s1), p2 = parseSegment(s2);
   if (s1.startsWith('#') || s2.startsWith('#')) return s1 === s2 ? s1 : null;
   if (p1.tag !== p2.tag) return null;
-  // 共同类，且无条件剔除动态类
   const commonClasses = p1.classes.filter(c => p2.classes.includes(c) && !isDynamic(c));
   const commonPseudo  = p1.pseudo.filter(p => p2.pseudo.includes(p));
   return p1.tag + commonClasses.map(c => '.' + c).join('') + commonPseudo.join('') || p1.tag || null;
@@ -310,7 +398,6 @@ function mergeSegments(s1, s2) {
 
 function deriveSelector(sel1, sel2) {
   if (!sel1 && !sel2) return '';
-  // 单个 selector 时也需清理动态类
   const clean = sel => sel.split(/>/).map(s => {
     const p = parseSegment(s.trim());
     const stable = p.classes.filter(c => !isDynamic(c));
@@ -334,18 +421,14 @@ function buildCandidates(full) {
   const parts = full.split(/ > /);
   const candidates = [];
 
-  // 候选 1：完整推导路径
   if (full) candidates.push({ label: '精确路径（完整）', sel: full });
 
-  // 候选 2：从关键容器（li/article/div 带类）截断
   let keyIdx = parts.findIndex((p, i) => i > 0 && /^(li|article|div)\.[a-z]/.test(p));
   if (keyIdx > 0 && keyIdx < parts.length - 1) {
     const shortened = parts.slice(keyIdx).join(' > ');
     if (shortened !== full) candidates.push({ label: '从容器截断（推荐）', sel: shortened });
   }
 
-  // 候选 3：保留末尾关键节点（去掉前面通用的 div/ul 路径）
-  // 找到最后一个有类名的 li/article/section
   let containerIdx = -1;
   for (let i = parts.length - 1; i >= 0; i--) {
     if (/^(li|article|section|div)\.[a-z]/.test(parts[i])) { containerIdx = i; break; }
@@ -372,11 +455,9 @@ function onSampleChange() {
 
   const candidates = buildCandidates(derived);
   container.innerHTML = candidates.map((c, i) =>
-    `<div class="candidate-item" data-sel="${c.sel.replace(/"/g, '&quot;')}"
-         style="cursor:pointer;background:#f0fdf4;border:1px solid #86efac;border-radius:6px;
-                padding:0.4rem 0.7rem;font-size:0.8rem;">
-       <div style="color:#86868b;font-size:0.72rem;margin-bottom:0.2rem;">${c.label}</div>
-       <code style="word-break:break-all;color:#065f46;">${c.sel}</code>
+    `<div class="candidate-item" data-sel="${c.sel.replace(/"/g, '&quot;')}">
+       <div class="label">${c.label}</div>
+       <code>${c.sel}</code>
      </div>`
   ).join('');
 
@@ -384,18 +465,19 @@ function onSampleChange() {
     el.addEventListener('click', () => {
       field.value = el.dataset.sel;
       container.querySelectorAll('.candidate-item').forEach(e =>
-        e.style.borderColor = e === el ? '#34c759' : '#86efac'
+        e.classList.remove('selected')
       );
+      el.classList.add('selected');
     });
   });
 
-  // 默认选中第二个（推荐）或第一个
+  // Default select second (recommended) or first
   const preferred = candidates.find(c => c.label.includes('推荐')) || candidates[0];
   if (preferred) {
     field.value = preferred.sel;
     const idx = candidates.indexOf(preferred);
     const items = container.querySelectorAll('.candidate-item');
-    if (items[idx]) items[idx].style.borderColor = '#34c759';
+    if (items[idx]) items[idx].classList.add('selected');
   }
 
   row.style.display = '';
@@ -406,11 +488,11 @@ document.getElementById('sample_selector_2').addEventListener('input', onSampleC
 
 // ─────────────────────────────────────────────────────────────
 
-// 页面初始化：设置当前提供方的 datalist
+// Page init: set current provider's datalist
 (function() {
   const provider = document.getElementById("ai_provider").value;
   onProviderChange(provider);
-  // 如果 feed 已有模型，恢复用户选择的值
+  // Restore saved model if feed has one
   const savedModel = "{{ feed.ai_model if feed and feed.ai_model else '' }}";
   if (savedModel) {
     document.getElementById("ai_model").value = savedModel;
@@ -429,7 +511,7 @@ function onFeedTypeChange(type) {
   }
 }
 
-// 初始化：根据当前选中类型设置显隐状态
+// Init: set visibility based on current selection
 (function() {
   const checked = document.querySelector('input[name="feed_type"]:checked');
   if (checked) onFeedTypeChange(checked.value);

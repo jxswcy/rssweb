@@ -19,8 +19,8 @@ async def get_rss(feed_id: int, request: Request, db: Session = Depends(get_db))
     # 双语翻译开启时，只输出已完成翻译的文章，避免 RSS 客户端将纯原文版本标记为已读
     if feed.translation_enabled:
         query = query.filter(Article.content_translated.isnot(None))
-    # 排序：优先按 order_index 升序（保留原始顺序），其次按 published_at/fetched_at 降序
-    articles = query.order_by(Article.order_index.asc(), Article.published_at.desc(), Article.fetched_at.desc()).limit(50).all()
+    # 排序：按发布时间倒序（最新在前），其次按抓取时间倒序
+    articles = query.order_by(Article.published_at.desc(), Article.fetched_at.desc()).limit(50).all()
 
     base_url = str(request.base_url).rstrip("/")
     xml_bytes = generate_rss_feed(feed, articles, base_url=base_url)

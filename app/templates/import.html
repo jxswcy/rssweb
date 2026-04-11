@@ -1,9 +1,47 @@
 {% extends "base.html" %}
 {% block title %}导入订阅 — RSS Web{% endblock %}
 
+{% block extra_style %}
+<style>
+  .import-container {
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  .import-title {
+    font-size: 1.5rem;
+    font-weight: 500;
+    margin-bottom: 1.2rem;
+    font-family: "SF Pro Rounded", system-ui, -apple-system, sans-serif;
+  }
+  input[type="file"] {
+    width: 100%;
+    padding: 10px 16px;
+    border: 1px solid var(--light-gray);
+    border-radius: var(--radius-container);
+    font-size: 14px;
+    background: var(--white);
+    color: var(--black);
+    cursor: pointer;
+  }
+  input[type="file"]::file-selector-button {
+    padding: 6px 16px;
+    border: 1px solid var(--light-gray);
+    border-radius: var(--radius-pill);
+    font-size: 14px;
+    background: var(--light-gray);
+    color: var(--near-black);
+    cursor: pointer;
+    margin-right: 12px;
+  }
+  input[type="file"]::file-selector-button:hover {
+    background: var(--border-light);
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<div style="max-width:480px;margin:0 auto;">
-  <h1 style="font-size:1.5rem;font-weight:700;margin-bottom:1.2rem;">导入订阅</h1>
+<div class="import-container">
+  <h1 class="import-title">导入订阅</h1>
 
   {% if imported is defined %}
     {% if imported > 0 %}
@@ -12,7 +50,7 @@
     {% if errors %}
     <div class="alert alert-error" style="margin-bottom:1rem;">
       <div>部分导入失败：</div>
-      <ul style="margin:0.3rem 0 0 1.2rem;">
+      <ul style="margin:6px 0 0 1.2rem;font-size:14px;">
         {% for e in errors %}
         <li>{{ e }}</li>
         {% endfor %}
@@ -30,13 +68,13 @@
         </div>
         <button type="submit" class="btn btn-primary">导入</button>
       </form>
-      <div class="hint" style="margin-top:0.8rem;">
+      <div class="hint" style="margin-top:12px;">
         仅支持通过本系统「导出」生成的 JSON 文件。
       </div>
     </div>
   </div>
 
-  <div style="margin-top:1rem;">
+  <div style="margin-top:var(--spacing-lg);">
     <a href="/" class="btn btn-secondary">返回首页</a>
   </div>
 </div>

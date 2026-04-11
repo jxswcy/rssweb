@@ -6,63 +6,389 @@
   <title>{% block title %}RSS Web{% endblock %}</title>
   <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
   <style>
+    /* === Ollama-inspired Design System === */
+    /* Pure grayscale, pill-shaped buttons, zero shadows */
+
+    :root {
+      /* Primary Colors */
+      --black: #000000;
+      --near-black: #262626;
+      --darkest-surface: #090909;
+
+      /* Surface & Background */
+      --white: #ffffff;
+      --snow: #fafafa;
+      --light-gray: #e5e5e5;
+
+      /* Neutrals & Text */
+      --stone: #737373;
+      --mid-gray: #525252;
+      --silver: #a3a3a3;
+      --button-text-dark: #404040;
+
+      /* Border & Focus */
+      --border-light: #d4d4d4;
+      --ring-blue: rgba(59, 130, 246, 0.5);
+
+      /* Spacing Scale (8px base) */
+      --spacing-xs: 0.25rem;   /* 4px */
+      --spacing-sm: 0.5rem;    /* 8px */
+      --spacing-md: 0.75rem;   /* 12px */
+      --spacing-lg: 1rem;      /* 16px */
+      --spacing-xl: 1.5rem;    /* 24px */
+      --spacing-2xl: 2rem;     /* 32px */
+      --spacing-3xl: 3rem;     /* 48px */
+
+      /* Border Radius - Binary System */
+      --radius-container: 12px;
+      --radius-pill: 9999px;
+    }
+
+    /* === Base Styles === */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
-      background: #f5f5f7;
-      color: #1d1d1f;
+      font-family: ui-sans-serif, system-ui, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji, sans-serif;
+      background: var(--white);
+      color: var(--black);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      line-height: 1.5;
+      font-size: 16px;
     }
+
     main { flex: 1; }
+
+    /* === Navigation === */
     nav {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      padding: 0 2rem;
+      background: var(--white);
+      padding: 0 var(--spacing-2xl);
       height: 56px;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      border-bottom: 1px solid var(--light-gray);
     }
-    nav a { color: #fff; text-decoration: none; font-weight: 600; font-size: 1.1rem; }
-    nav .nav-links a { margin-left: 1.5rem; font-weight: 400; font-size: 0.95rem; opacity: 0.9; }
+
+    nav a {
+      color: var(--black);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 16px;
+      font-family: "SF Pro Rounded", system-ui, -apple-system, system-ui, sans-serif;
+    }
+
+    nav .nav-links a {
+      margin-left: var(--spacing-xl);
+      font-weight: 400;
+      opacity: 0.7;
+    }
+
     nav .nav-links a:hover { opacity: 1; }
-    main { max-width: 960px; margin: 0 auto; padding: 2rem 1rem; width: 100%; }
+
+    /* === Main Content === */
+    main {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: var(--spacing-xl) var(--spacing-lg);
+      width: 100%;
+    }
+
+    /* === Typography === */
+    h1, h2, h3 {
+      font-family: "SF Pro Rounded", system-ui, -apple-system, system-ui, sans-serif;
+      font-weight: 500;
+      line-height: 1.2;
+    }
+
+    .page-title {
+      font-size: 1.5rem;
+      font-weight: 500;
+      margin-bottom: var(--spacing-xl);
+      font-family: "SF Pro Rounded", system-ui, -apple-system, system-ui, sans-serif;
+    }
+
+    /* === Buttons === */
     .btn {
-      display: inline-flex; align-items: center; justify-content: center;
-      padding: 0.42rem 1rem; border-radius: 8px;
-      font-size: 0.88rem; font-weight: 500; cursor: pointer; border: none;
-      text-decoration: none; transition: opacity 0.15s; text-align: center;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 24px;
+      border-radius: var(--radius-pill);
+      font-size: 16px;
+      font-weight: 400;
+      cursor: pointer;
+      border: 1px solid var(--light-gray);
+      text-decoration: none;
+      text-align: center;
       white-space: nowrap;
+      line-height: 1.4;
+      background: var(--light-gray);
+      color: var(--near-black);
+      transition: background 0.15s ease;
     }
-    .btn:hover { opacity: 0.82; }
-    .btn-primary { background: #6e56cf; color: #fff; }
-    .btn-secondary { background: #e8e8ed; color: #3a3a3c; }
-    .btn-rss      { background: #0A84FF; color: #fff; }
-    .btn-refresh  { background: #FF9F0A; color: #fff; }
-    .btn-retranslate { background: #30D158; color: #fff; }
-    .btn-danger   { background: #FF453A; color: #fff; }
+
+    .btn:hover {
+      background: var(--border-light);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    /* Primary action - Black pill */
+    .btn-primary {
+      background: var(--black);
+      color: var(--white);
+      border-color: var(--black);
+    }
+
+    .btn-primary:hover {
+      background: var(--near-black);
+    }
+
+    /* Secondary action - White pill */
+    .btn-secondary {
+      background: var(--white);
+      color: var(--button-text-dark);
+      border-color: var(--border-light);
+    }
+
+    .btn-secondary:hover {
+      background: var(--snow);
+    }
+
+    /* All other buttons use default gray pill style */
+    .btn-rss, .btn-refresh, .btn-retranslate, .btn-danger,
+    .btn-edit, .btn-import, .btn-export, .btn-cleanup,
+    .btn-clear, .btn-test, .btn-save {
+      /* Same as default .btn - gray pill */
+    }
+
+    /* === Cards === */
     .card {
-      background: #fff; border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-      overflow: hidden; margin-bottom: 1.2rem;
+      background: var(--white);
+      border-radius: var(--radius-container);
+      border: 1px solid var(--light-gray);
+      margin-bottom: var(--spacing-lg);
     }
-    .card-top-bar { height: 4px; }
-    .card-body { padding: 1.2rem 1.4rem; }
-    .form-group { margin-bottom: 1.2rem; }
-    label { display: block; font-size: 0.9rem; font-weight: 500; margin-bottom: 0.4rem; color: #3a3a3c; }
-    input[type=text], input[type=url], input[type=number], input[type=password], select {
-      width: 100%; padding: 0.55rem 0.8rem; border: 1px solid #d2d2d7;
-      border-radius: 8px; font-size: 0.95rem; background: #fff;
+
+    .card-top-bar {
+      display: none; /* Removed - no longer using color bars */
+    }
+
+    .card-body {
+      padding: var(--spacing-lg);
+    }
+
+    /* === Forms === */
+    .form-group {
+      margin-bottom: var(--spacing-lg);
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 6px;
+      color: var(--stone);
+    }
+
+    input[type=text], input[type=url], input[type=number],
+    input[type=password], input[type=email], select {
+      width: 100%;
+      padding: 10px 16px;
+      border: 1px solid var(--light-gray);
+      border-radius: var(--radius-pill);
+      font-size: 16px;
+      background: var(--white);
+      color: var(--black);
       transition: border-color 0.15s;
+      font-family: inherit;
     }
-    input:focus, select:focus { outline: none; border-color: #667eea; }
-    .toggle-row { display: flex; align-items: center; gap: 0.8rem; }
-    .hint { font-size: 0.8rem; color: #86868b; margin-top: 0.3rem; line-height: 1.6; }
-    .hint code { background: #e5e5ea; padding: 0.1rem 0.3rem; border-radius: 3px; font-family: monospace; color: #3a3a3c; }
-    .alert { padding: 0.8rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem; }
-    .alert-success { background: #d1fae5; color: #065f46; }
-    .alert-error { background: #fee2e2; color: #991b1b; }
+
+    select {
+      text-align: left;
+      direction: ltr;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23737373' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 40px;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--ring-blue);
+      box-shadow: 0 0 0 2px var(--ring-blue);
+    }
+
+    input::placeholder {
+      color: var(--silver);
+    }
+
+    /* === Custom Dropdown Component === */
+    .dropdown {
+      position: relative;
+      width: 100%;
+    }
+
+    .dropdown-btn {
+      width: 100%;
+      padding: 10px 16px;
+      border: 1px solid var(--light-gray);
+      border-radius: var(--radius-pill);
+      font-size: 16px;
+      background: var(--white);
+      color: var(--black);
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .dropdown-btn:hover {
+      border-color: var(--mid-gray);
+    }
+
+    .dropdown-btn::after {
+      content: '';
+      width: 0;
+      height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 5px solid var(--stone);
+      margin-left: 8px;
+    }
+
+    .dropdown.open .dropdown-btn::after {
+      transform: rotate(180deg);
+    }
+
+    .dropdown-menu {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      margin-top: 4px;
+      background: var(--white);
+      border: 1px solid var(--light-gray);
+      border-radius: var(--radius-container);
+      z-index: 9999;
+      display: none;
+      overflow: hidden;
+    }
+
+    .dropdown.open .dropdown-menu {
+      display: block;
+    }
+
+    .dropdown-item {
+      padding: 10px 16px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .dropdown-item:hover {
+      background: var(--snow);
+    }
+
+    .dropdown-item.selected {
+      background: var(--snow);
+      color: var(--black);
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+    }
+
+    /* === Hint Text === */
+    .hint {
+      font-size: 14px;
+      color: var(--silver);
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    .hint code {
+      background: var(--snow);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      color: var(--stone);
+    }
+
+    /* === Alerts === */
+    .alert {
+      padding: 10px 16px;
+      border-radius: var(--radius-container);
+      margin-bottom: var(--spacing-lg);
+      font-size: 14px;
+      border: 1px solid var(--light-gray);
+    }
+
+    .alert-success {
+      background: var(--snow);
+      color: var(--near-black);
+    }
+
+    .alert-error {
+      background: var(--snow);
+      color: var(--near-black);
+      border-color: var(--mid-gray);
+    }
+
+    /* === Footer === */
+    footer {
+      text-align: center;
+      padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-xl);
+      font-size: 14px;
+      color: var(--stone);
+      border-top: 1px solid var(--light-gray);
+      background: var(--white);
+    }
+
+    footer a {
+      color: var(--black);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* === Code/Monospace === */
+    code, pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace;
+    }
+
+    /* === HTMX Indicator === */
+    .htmx-indicator {
+      display: none;
+      font-size: 14px;
+      color: var(--stone);
+    }
+
+    .htmx-request .htmx-indicator,
+    .htmx-request.htmx-indicator {
+      display: inline;
+    }
+
+    /* === Checkbox & Radio === */
+    input[type="checkbox"],
+    input[type="radio"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: var(--black);
+    }
   </style>
   {% block extra_style %}{% endblock %}
 </head>
@@ -78,10 +404,102 @@
   <main>
     {% block content %}{% endblock %}
   </main>
-  <footer style="text-align:center;padding:1rem 1rem 1.4rem;font-size:0.76rem;color:#aeaeb2;border-top:1px solid #e5e5ea;background:#f5f5f7;">
-    <span style="color:#c7c7cc;">v1.2.0</span>
-    &nbsp;·&nbsp;
-    Built by <a href="https://github.com/jxswcy" style="color:#0A84FF;text-decoration:none;font-weight:500;" target="_blank">jxswcy</a>
+  <footer>
+    Built by <a href="https://github.com/jxswcy" target="_blank">jxswcy</a>
   </footer>
+  <script>
+  // Custom Dropdown Component
+  let activeDropdown = null;
+  let floatingMenu = null;
+
+  function closeDropdown() {
+    if (activeDropdown) {
+      activeDropdown = null;
+    }
+    if (floatingMenu) {
+      floatingMenu.remove();
+      floatingMenu = null;
+    }
+  }
+
+  document.addEventListener('click', function(e) {
+    const dropdown = e.target.closest('.dropdown');
+    const isDropdownBtn = e.target.classList.contains('dropdown-btn');
+    const isDropdownItem = e.target.classList.contains('dropdown-item');
+
+    // Close when clicking outside
+    if (!dropdown) {
+      closeDropdown();
+      return;
+    }
+
+    // Toggle on button click
+    if (isDropdownBtn) {
+      if (activeDropdown === dropdown) {
+        closeDropdown();
+        return;
+      }
+      closeDropdown();
+      activeDropdown = dropdown;
+
+      // Create floating menu
+      const btn = dropdown.querySelector('.dropdown-btn');
+      const rect = btn.getBoundingClientRect();
+      const menu = dropdown.querySelector('.dropdown-menu');
+
+      floatingMenu = menu.cloneNode(true);
+      floatingMenu.id = 'floating-dropdown-menu';
+      floatingMenu.className = 'dropdown-menu';
+      floatingMenu.style.position = 'fixed';
+      floatingMenu.style.top = `${rect.bottom + 4}px`;
+      floatingMenu.style.left = `${rect.left}px`;
+      floatingMenu.style.width = `${rect.width}px`;
+      floatingMenu.style.zIndex = '99999';
+      floatingMenu.style.display = 'block';
+      document.body.appendChild(floatingMenu);
+
+      // Handle floating menu item clicks
+      floatingMenu.addEventListener('click', function(ev) {
+        if (ev.target.classList.contains('dropdown-item')) {
+          const value = ev.target.dataset.value;
+          const hidden = dropdown.querySelector('input[type="hidden"]');
+          const btn = dropdown.querySelector('.dropdown-btn');
+
+          // Update button text
+          btn.textContent = ev.target.textContent;
+          // Update hidden field
+          if (hidden) hidden.value = value;
+          // Update selected state
+          dropdown.querySelectorAll('.dropdown-item').forEach(item => item.classList.remove('selected'));
+          dropdown.querySelector(`.dropdown-item[data-value="${value}"]`)?.classList.add('selected');
+
+          closeDropdown();
+
+          // Trigger HTMX request
+          if (dropdown.hasAttribute('hx-post')) {
+            htmx.trigger(dropdown, 'change');
+          }
+
+          // Special handling: AI provider change
+          if (dropdown.id === 'ai-provider-dropdown' && typeof onProviderChange === 'function') {
+            onProviderChange(value);
+          }
+        }
+      });
+
+      return;
+    }
+  });
+
+  // Close on outside mousedown
+  document.addEventListener('mousedown', function(e) {
+    if (floatingMenu && !floatingMenu.contains(e.target) && !e.target.classList.contains('dropdown-btn')) {
+      closeDropdown();
+    }
+  });
+
+  // Close on scroll
+  window.addEventListener('scroll', closeDropdown, true);
+  </script>
 </body>
 </html>

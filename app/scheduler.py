@@ -416,6 +416,19 @@ async def _cleanup_old_articles(feed_id: int):
         db.close()
 
 
+async def cleanup_all_feeds():
+    """公开接口：清理所有 Feed 超过限制的旧文章"""
+    db = SessionLocal()
+    try:
+        feeds = db.query(Feed).all()
+        logger.info("开始清理所有 Feed 的旧文章")
+        for feed in feeds:
+            await _cleanup_old_articles(feed.id)
+        logger.info("清理所有 Feed 完成")
+    finally:
+        db.close()
+
+
 def _get_setting(db: Session, key: str) -> Optional[str]:
     from app.models import Setting
     s = db.query(Setting).filter(Setting.key == key).first()

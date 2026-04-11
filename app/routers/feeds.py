@@ -1,6 +1,7 @@
 import asyncio
 import html
 import json
+import logging
 from typing import Optional
 from urllib.parse import urlparse
 from datetime import datetime, timezone
@@ -13,8 +14,10 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Article, Feed
 from app.routers.auth import require_login
-from app.scheduler import register_feed, remove_feed_job, run_feed_now, retranslate_feed
+from app.scheduler import register_feed, remove_feed_job, run_feed_now, retranslate_feed, cleanup_all_feeds
 from app.scraper import fetch_article_list, fetch_article_content, parse_rss_feed
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -240,6 +243,43 @@ async def import_feeds(
     )
 
 
+# ── 批量操作接口（必须在 /feeds/{feed_id} 之前定义）──────────────────────────
+
+@router.post("/feeds/refresh-all", response_class=RedirectResponse)
+async def refresh_all_feeds(db: Session = Depends(get_db), _: None = Depends(require_login)):
+    """刷新所有订阅"""
+    feeds = db.query(Feed).all()
+    count = 0
+    for feed in feeds:
+        try:
+            asyncio.create_task(run_feed_now(feed.id))
+            count += 1
+        except Exception as e:
+            logger.error("Failed to trigger refresh for feed %d (%s): %s", feed.id, feed.name, e)
+    logger.info("已触发 %d 个 Feed 的刷新任务", count)
+    return RedirectResponse(url="/", status_code=303)
+
+
+@router.post("/feeds/clear-all", response_class=RedirectResponse)
+async def clear_all_articles(db: Session = Depends(get_db), _: None = Depends(require_login)):
+    """清除所有文章数据"""
+    article_count = db.query(Article).count()
+    db.query(Article).delete()
+    db.query(Feed).update({"last_fetched_at": None, "last_error": None})
+    db.commit()
+    logger.info("已清除所有文章数据，共 %d 篇", article_count)
+    return RedirectResponse(url="/", status_code=303)
+
+
+@router.post("/feeds/cleanup", response_class=RedirectResponse)
+async def cleanup_old_articles_route(db: Session = Depends(get_db), _: None = Depends(require_login)):
+    """清理所有 Feed 超过限制的旧文章"""
+    await cleanup_all_feeds()
+    return RedirectResponse(url="/", status_code=303)
+
+
+# ── 单个 Feed 操作接口 ────────────────────────────────────────────────────────
+
 @router.post("/feeds/{feed_id}/refresh", response_class=RedirectResponse)
 async def refresh_feed(feed_id: int, db: Session = Depends(get_db), _: None = Depends(require_login)):
     """手动刷新：立即触发一次抓取"""
@@ -257,6 +297,21 @@ async def retranslate_feed_route(feed_id: int, db: Session = Depends(get_db), _:
     if not feed:
         raise HTTPException(status_code=404, detail="Feed not found")
     await retranslate_feed(feed_id)
+    return RedirectResponse(url="/", status_code=303)
+
+
+@router.post("/feeds/{feed_id}/clear", response_class=RedirectResponse)
+async def clear_feed_articles(feed_id: int, db: Session = Depends(get_db), _: None = Depends(require_login)):
+    """清除单个 Feed 的文章数据"""
+    feed = db.query(Feed).filter(Feed.id == feed_id).first()
+    if not feed:
+        raise HTTPException(status_code=404, detail="Feed not found")
+    article_count = db.query(Article).filter(Article.feed_id == feed_id).count()
+    db.query(Article).filter(Article.feed_id == feed_id).delete()
+    feed.last_fetched_at = None
+    feed.last_error = None
+    db.commit()
+    logger.info("已清除 Feed %d (%s) 的 %d 篇文章", feed_id, feed.name, article_count)
     return RedirectResponse(url="/", status_code=303)
 
 
@@ -301,5 +356,3 @@ async def delete_feed(feed_id: int, db: Session = Depends(get_db), _: None = Dep
     db.delete(feed)
     db.commit()
     return RedirectResponse(url="/", status_code=303)
-
-

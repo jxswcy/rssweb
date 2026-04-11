@@ -1,11 +1,26 @@
 {% extends "base.html" %}
 {% block title %}登录 — RSS Web{% endblock %}
 
+{% block extra_style %}
+<style>
+  .login-container {
+    max-width: 360px;
+    margin: 4rem auto;
+  }
+  .login-title {
+    font-size: 1.5rem;
+    font-weight: 500;
+    margin-bottom: 1.2rem;
+    font-family: "SF Pro Rounded", system-ui, -apple-system, sans-serif;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<div style="max-width:360px;margin:4rem auto;">
+<div class="login-container">
   <div class="card">
     <div class="card-body">
-      <h1 style="font-size:1.4rem;font-weight:700;margin-bottom:1.2rem;">登录</h1>
+      <h1 class="login-title">登录</h1>
       {% if error %}
       <div class="alert alert-error" style="margin-bottom:1rem;">{{ error }}</div>
       {% endif %}

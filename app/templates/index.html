@@ -3,29 +3,123 @@
 
 {% block extra_style %}
 <style>
-  .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
-  .page-header h1 { font-size: 1.6rem; font-weight: 700; }
-  .feed-name { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.3rem; }
-  .feed-url { font-size: 0.82rem; color: #86868b; margin-bottom: 0.7rem; word-break: break-all; }
-  .feed-meta { font-size: 0.82rem; color: #6e6e73; margin-bottom: 0.8rem; }
-  .feed-error { font-size: 0.8rem; color: #ff3b30; margin-top: 0.3rem; }
-  .feed-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-  .color-bar-0 { background: linear-gradient(90deg, #667eea, #764ba2); }
-  .color-bar-1 { background: linear-gradient(90deg, #f093fb, #f5576c); }
-  .color-bar-2 { background: linear-gradient(90deg, #4facfe, #00f2fe); }
-  .color-bar-3 { background: linear-gradient(90deg, #43e97b, #38f9d7); }
-  .color-bar-4 { background: linear-gradient(90deg, #fa709a, #fee140); }
-  .empty-state { text-align: center; padding: 3rem 0; color: #86868b; }
-  .empty-state p { margin-bottom: 1rem; }
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-xl);
+    flex-wrap: wrap;
+    gap: var(--spacing-lg);
+  }
+  .page-header h1 {
+    font-size: 1.5rem;
+    font-weight: 500;
+    font-family: "SF Pro Rounded", system-ui, -apple-system, sans-serif;
+  }
+  .header-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .feed-name {
+    font-size: 18px;
+    font-weight: 500;
+    margin-bottom: 4px;
+    font-family: "SF Pro Rounded", system-ui, -apple-system, sans-serif;
+  }
+  .feed-url {
+    font-size: 14px;
+    color: var(--silver);
+    margin-bottom: 8px;
+    word-break: break-all;
+  }
+  .feed-meta {
+    font-size: 14px;
+    color: var(--stone);
+    margin-bottom: 10px;
+    line-height: 1.5;
+  }
+  .feed-error {
+    font-size: 14px;
+    color: var(--mid-gray);
+    margin-top: 6px;
+  }
+  .feed-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+    margin-top: 4px;
+  }
+  .feed-tag {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 500;
+    background: var(--snow);
+    color: var(--stone);
+    border-radius: var(--radius-pill);
+    padding: 2px 8px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  .status-tag {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+  }
+  .status-ok {
+    background: var(--snow);
+    color: var(--near-black);
+  }
+  .status-pending {
+    background: var(--snow);
+    color: var(--mid-gray);
+  }
+  .empty-state {
+    text-align: center;
+    padding: var(--spacing-3xl) 0;
+    color: var(--stone);
+  }
+  .empty-state p {
+    margin-bottom: var(--spacing-lg);
+  }
+  .toast {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--near-black);
+    color: var(--white);
+    padding: 10px 20px;
+    border-radius: var(--radius-pill);
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: 1000;
+  }
+  .toast.show {
+    opacity: 1;
+  }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="page-header">
   <h1>我的订阅</h1>
-  <div style="display:flex;gap:0.5rem;">
-    <a href="/feeds/import" class="btn btn-secondary">导入</a>
-    <a href="/feeds/export" class="btn btn-secondary">导出</a>
+  <div class="header-actions">
+    <form method="post" action="/feeds/refresh-all" style="display:inline">
+      <button type="submit" class="btn">刷新所有</button>
+    </form>
+    <form method="post" action="/feeds/cleanup" style="display:inline">
+      <button type="submit" class="btn">清理旧数据</button>
+    </form>
+    <form method="post" action="/feeds/clear-all" style="display:inline"
+          onsubmit="return confirm('确认清除所有文章数据？此操作不可恢复！')">
+      <button type="submit" class="btn">清除所有数据</button>
+    </form>
+    <a href="/feeds/import" class="btn">导入</a>
+    <a href="/feeds/export" class="btn">导出</a>
     <a href="/feeds/new" class="btn btn-primary">+ 新建</a>
   </div>
 </div>
@@ -33,18 +127,12 @@
 {% if feed_stats %}
   {% for item in feed_stats %}
   {% set feed = item.feed %}
-  {% set color_idx = loop.index0 % 5 %}
   <div class="card">
-    <div class="card-top-bar color-bar-{{ color_idx }}"></div>
     <div class="card-body">
       <div class="feed-name">
         {{ feed.name }}
         {% if feed.feed_type == 'rss_source' %}
-        <span style="display:inline-block;font-size:0.65rem;font-weight:600;
-                     background:#ff9500;color:#fff;border-radius:4px;
-                     padding:0.1rem 0.4rem;margin-left:0.4rem;vertical-align:middle;">
-          RSS
-        </span>
+        <span class="feed-tag">RSS</span>
         {% endif %}
       </div>
       <div class="feed-url">{{ feed.url }}</div>
@@ -59,9 +147,9 @@
         {% if feed.translation_enabled %}
           · 双语翻译开启
           {% if item.untranslated_count > 0 %}
-            <span style="color:#ff9500;">· {{ item.untranslated_count }} 篇待翻译</span>
+            <span class="status-tag status-pending">· {{ item.untranslated_count }} 篇待翻译</span>
           {% else %}
-            <span style="color:#34c759;">· 已全部翻译</span>
+            <span class="status-tag status-ok">· 已全部翻译</span>
           {% endif %}
         {% endif %}
       </div>
@@ -69,22 +157,26 @@
       <div class="feed-error">⚠ {{ feed.last_error }}</div>
       {% endif %}
       <div class="feed-actions">
-        <a href="/rss/{{ feed.id }}" class="btn btn-rss" target="_blank">订阅链接</a>
-        <a href="/feeds/{{ feed.id }}/edit" class="btn btn-secondary">编辑</a>
+        <button type="button" class="btn copy-rss-link" data-feed-id="{{ feed.id }}">订阅</button>
+        <a href="/feeds/{{ feed.id }}/edit" class="btn">编辑</a>
         <form method="post" action="/feeds/{{ feed.id }}/refresh" style="display:inline">
-          <button type="submit" class="btn btn-refresh">手动刷新</button>
+          <button type="submit" class="btn">刷新</button>
         </form>
         {% if feed.translation_enabled and item.untranslated_count > 0 %}
         <form method="post" action="/feeds/{{ feed.id }}/retranslate" style="display:inline">
-          <button type="submit" class="btn btn-retranslate"
+          <button type="submit" class="btn"
             title="对 {{ item.untranslated_count }} 篇未翻译文章补做翻译">
             补翻译 ({{ item.untranslated_count }})
           </button>
         </form>
         {% endif %}
+        <form method="post" action="/feeds/{{ feed.id }}/clear" style="display:inline"
+              onsubmit="return confirm('确认清空该订阅的所有文章？')">
+          <button type="submit" class="btn">清空</button>
+        </form>
         <form method="post" action="/feeds/{{ feed.id }}/delete" style="display:inline"
-              onsubmit="return confirm('确认删除？')">
-          <button type="submit" class="btn btn-danger">删除</button>
+              onsubmit="return confirm('确认删除该订阅？')">
+          <button type="submit" class="btn">删除</button>
         </form>
       </div>
     </div>
@@ -92,8 +184,49 @@
   {% endfor %}
 {% else %}
   <div class="empty-state">
-    <p>还没有订阅，点击「+ 新建订阅」开始添加。</p>
+    <p>还没有订阅，点击「+ 新建」开始添加。</p>
     <a href="/feeds/new" class="btn btn-primary">+ 新建订阅</a>
   </div>
 {% endif %}
+
+<script>
+// Auto refresh page (30s)
+setTimeout(function() {
+  location.reload();
+}, 30000);
+
+// Copy RSS link
+document.querySelectorAll('.copy-rss-link').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var feedId = this.dataset.feedId;
+    var rssUrl = window.location.origin + '/rss/' + feedId;
+    navigator.clipboard.writeText(rssUrl).then(function() {
+      showToast('订阅地址已复制');
+    }).catch(function() {
+      // Fallback for older browsers
+      var textarea = document.createElement('textarea');
+      textarea.value = rssUrl;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      showToast('订阅地址已复制');
+    });
+  });
+});
+
+function showToast(message) {
+  var toast = document.querySelector('.toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.className = 'toast';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = message;
+  toast.classList.add('show');
+  setTimeout(function() {
+    toast.classList.remove('show');
+  }, 2000);
+}
+</script>
 {% endblock %}

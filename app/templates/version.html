@@ -1,167 +1,159 @@
 {% extends "base.html" %}
 {% block title %}版本信息 — RSS Web{% endblock %}
 
+{% block extra_style %}
+<style>
+  .version-number {
+    font-size: 1.5rem;
+    font-weight: 500;
+    margin-bottom: var(--spacing-xl);
+    font-family: "SF Pro Rounded", system-ui, -apple-system, sans-serif;
+  }
+  .version-block {
+    margin-bottom: var(--spacing-xl);
+  }
+  .version-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--black);
+    margin-bottom: 8px;
+    font-family: "SF Pro Rounded", system-ui, -apple-system, sans-serif;
+  }
+  .version-list {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--stone);
+    margin: 0;
+    padding-left: 1.2rem;
+  }
+  .section-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--stone);
+    margin-bottom: 8px;
+  }
+  .tech-stack {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--stone);
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<div style="max-width:640px;margin:0 auto;">
-  <h1 style="font-size:1.5rem;font-weight:700;margin-bottom:1.2rem;">版本信息</h1>
+<div class="page-title">版本信息</div>
 
-  <div class="card">
-    <div class="card-body">
-      <div style="font-size:0.85rem;color:#86868b;margin-bottom:0.5rem;">当前版本</div>
-      <div style="font-size:1.2rem;font-weight:600;margin-bottom:1.5rem;">v1.7.5</div>
+<div class="card">
+  <div class="card-body">
+    <div class="section-label">当前版本</div>
+    <div class="version-number">v2.0.1</div>
 
-      <div style="font-size:0.85rem;font-weight:600;color:#3a3a3c;margin-bottom:0.8rem;">更新日志</div>
+    <div class="section-label">更新日志</div>
 
-      <!-- v1.7.5 -->
-      <div style="margin-bottom:1.5rem;">
-        <div style="font-size:0.9rem;font-weight:600;color:#1d1d1f;margin-bottom:0.4rem;">v1.7.5 (2026-04-10)</div>
-        <ul style="font-size:0.85rem;line-height:1.7;color:#6e6e73;margin:0;padding-left:1.2rem;">
-          <li>修复：保存配置按钮位置调整，更靠右对齐</li>
-          <li>修复：清理无效文章数据（内容为空的条目）</li>
-        </ul>
-      </div>
+    <!-- v2.0.1 -->
+    <div class="version-block">
+      <div class="version-title">v2.0.1 (2026-04-12)</div>
+      <ul class="version-list">
+        <li>订阅按钮改为点击复制链接，屏幕中央显示提示</li>
+        <li>提示样式符合 Ollama 风格</li>
+      </ul>
+    </div>
 
-      <!-- v1.7.4 -->
-      <div style="margin-bottom:1.5rem;">
-        <div style="font-size:0.9rem;font-weight:600;color:#1d1d1f;margin-bottom:0.4rem;">v1.7.4 (2026-04-10)</div>
-        <ul style="font-size:0.85rem;line-height:1.7;color:#6e6e73;margin:0;padding-left:1.2rem;">
-          <li>优化：设置界面按钮布局统一，测试翻译左侧，保存配置右侧对齐</li>
-        </ul>
-      </div>
+    <!-- v2.0.0 -->
+    <div class="version-block">
+      <div class="version-title">v2.0.0 (2026-04-12)</div>
+      <ul class="version-list">
+        <li>全新 UI 设计，采用 Ollama 风格极简主题</li>
+        <li>重新设计首页、设置页、订阅表单等所有页面</li>
+        <li>优化卡片布局和按钮交互</li>
+        <li>改进响应式设计，适配不同屏幕尺寸</li>
+      </ul>
+    </div>
 
-      <!-- v1.7.3 -->
-      <div style="margin-bottom:1.5rem;">
-        <div style="font-size:0.9rem;font-weight:600;color:#1d1d1f;margin-bottom:0.4rem;">v1.7.3 (2026-04-10)</div>
-        <ul style="font-size:0.85rem;line-height:1.7;color:#6e6e73;margin:0;padding-left:1.2rem;">
-          <li>修复：手动刷新和定时任务同时触发导致重复抓取的问题</li>
-          <li>优化：设置界面按钮布局调整，保存配置和测试翻译并排显示</li>
-        </ul>
-      </div>
+    <!-- v1.9.0 -->
+    <div class="version-block">
+      <div class="version-title">v1.9.0 (2026-04-11)</div>
+      <ul class="version-list">
+        <li>新增一键刷新所有订阅功能</li>
+        <li>新增数据管理功能：清理旧数据、清除所有数据、单订阅清空</li>
+        <li>页面自动刷新（30秒），实时查看抓取进度</li>
+        <li>修复 RSS 排序问题，确保最新文章始终在前</li>
+        <li>优化按钮颜色和布局间距，界面更美观协调</li>
+      </ul>
+    </div>
 
-      <!-- v1.7.2 -->
-      <div style="margin-bottom:1.5rem;">
-        <div style="font-size:0.9rem;font-weight:600;color:#1d1d1f;margin-bottom:0.4rem;">v1.7.2 (2026-04-10)</div>
-        <ul style="font-size:0.85rem;line-height:1.7;color:#6e6e73;margin:0;padding-left:1.2rem;">
-          <li>优化：清理日志显示被删除文章的标题、发布时间和抓取时间</li>
-        </ul>
-      </div>
+    <!-- v1.8.0 -->
+    <div class="version-block">
+      <div class="version-title">v1.8.0 (2026-04-10)</div>
+      <ul class="version-list">
+        <li>新增 Ollama 风格极简主题系统</li>
+        <li>优化 UI 样式</li>
+      </ul>
+    </div>
 
-      <!-- v1.7.1 -->
-      <div style="margin-bottom:1.5rem;">
-        <div style="font-size:0.9rem;font-weight:600;color:#1d1d1f;margin-bottom:0.4rem;">v1.7.1 (2026-04-10)</div>
-        <ul style="font-size:0.85rem;line-height:1.7;color:#6e6e73;margin:0;padding-left:1.2rem;">
-          <li>修复：日志配置缺失导致 INFO 级别日志不输出</li>
-          <li>修复：清理功能在没有新文章时不执行的问题</li>
-          <li>优化：添加详细的抓取/翻译/清理日志输出</li>
-        </ul>
-      </div>
+    <!-- v1.7.0 -->
+    <div class="version-block">
+      <div class="version-title">v1.7.0 (2026-04-10)</div>
+      <ul class="version-list">
+        <li>新增文章数量限制配置（50-500篇）</li>
+        <li>修复重复抓取问题，优化日志输出</li>
+      </ul>
+    </div>
 
-      <!-- v1.7.0 -->
-      <div style="margin-bottom:1.5rem;">
-        <div style="font-size:0.9rem;font-weight:600;color:#1d1d1f;margin-bottom:0.4rem;">v1.7.0 (2026-04-10)</div>
-        <ul style="font-size:0.85rem;line-height:1.7;color:#6e6e73;margin:0;padding-left:1.2rem;">
-          <li>新增：文章数量限制配置（50-500篇，默认100篇）</li>
-          <li>新增：翻译过程日志输出，方便通过 docker logs 观察运行状态</li>
-        </ul>
-      </div>
+    <!-- v1.6.0 -->
+    <div class="version-block">
+      <div class="version-title">v1.6.0 (2026-04-10)</div>
+      <ul class="version-list">
+        <li>优化设置界面，支持独立保存和自动保存</li>
+      </ul>
+    </div>
 
-      <!-- v1.6.0 -->
-      <div style="margin-bottom:1.5rem;">
-        <div style="font-size:0.9rem;font-weight:600;color:#1d1d1f;margin-bottom:0.4rem;">v1.6.0 (2026-04-10)</div>
-        <ul style="font-size:0.85rem;line-height:1.7;color:#6e6e73;margin:0;padding-left:1.2rem;">
-          <li>优化：每个 AI 供应方独立保存按钮，操作更便捷</li>
-          <li>优化：翻译目标语言选择后自动保存</li>
-        </ul>
-      </div>
+    <!-- v1.5.0 -->
+    <div class="version-block">
+      <div class="version-title">v1.5.0 (2026-04-10)</div>
+      <ul class="version-list">
+        <li>修复时区处理问题，统一使用东8区时间</li>
+      </ul>
+    </div>
 
-      <!-- v1.5.1 -->
-      <div style="margin-bottom:1.5rem;">
-        <div style="font-size:0.9rem;font-weight:600;color:#1d1d1f;margin-bottom:0.4rem;">v1.5.1 (2026-04-10)</div>
-        <ul style="font-size:0.85rem;line-height:1.7;color:#6e6e73;margin:0;padding-left:1.2rem;">
-          <li>修复：翻译测试失败时静默返回原文，改为显示错误信息</li>
-          <li>修复：OpenRouter API 调用缺少必需的 HTTP 头部</li>
-        </ul>
-      </div>
+    <!-- v1.4.0 -->
+    <div class="version-block">
+      <div class="version-title">v1.4.0 (2026-04-10)</div>
+      <ul class="version-list">
+        <li>自动提取文章发布时间，RSS 按原始顺序排序</li>
+        <li>修复手动刷新、补翻译功能错误</li>
+      </ul>
+    </div>
 
-      <!-- v1.5.0 -->
-      <div style="margin-bottom:1.5rem;">
-        <div style="font-size:0.9rem;font-weight:600;color:#1d1d1f;margin-bottom:0.4rem;">v1.5.0 (2026-04-10)</div>
-        <ul style="font-size:0.85rem;line-height:1.7;color:#6e6e73;margin:0;padding-left:1.2rem;">
-          <li>修复：时区处理导致文章发布时间偏移 8 小时的问题</li>
-          <li>优化：新增全局常量模块，统一时区配置</li>
-          <li>优化：为文章排序添加数据库索引</li>
-        </ul>
-      </div>
+    <!-- v1.1.0 -->
+    <div class="version-block">
+      <div class="version-title">v1.1.0 (2026-04-09)</div>
+      <ul class="version-list">
+        <li>新增 RSS 源订阅类型</li>
+        <li>新增 Google 翻译（免费）</li>
+        <li>新增登录认证、订阅导入导出</li>
+      </ul>
+    </div>
 
-      <!-- v1.4.0 -->
-      <div style="margin-bottom:1.5rem;">
-        <div style="font-size:0.9rem;font-weight:600;color:#1d1d1f;margin-bottom:0.4rem;">v1.4.0 (2026-04-10)</div>
-        <ul style="font-size:0.85rem;line-height:1.7;color:#6e6e73;margin:0;padding-left:1.2rem;">
-          <li>优化：统一使用东8区（北京时间）显示文章发布时间</li>
-          <li>优化：自动从网页提取文章发布时间（支持 time 标签、meta 标签等）</li>
-          <li>优化：RSS 输出按文章原始顺序排序，确保时间线正确</li>
-          <li>修复：手动刷新、补翻译功能 404 错误</li>
-          <li>修复：版本页面路由类型错误</li>
-          <li>修复：正文预览接口返回值处理错误</li>
-        </ul>
-      </div>
+    <!-- v1.0.0 -->
+    <div class="version-block" style="margin-bottom:0;">
+      <div class="version-title">v1.0.0 (2026-04-08)</div>
+      <ul class="version-list">
+        <li>初始版本，支持网页抓取生成 RSS</li>
+        <li>支持 AI 双语翻译和智能 Selector 推导</li>
+      </ul>
+    </div>
 
-      <!-- v1.3.0 -->
-      <div style="margin-bottom:1.5rem;">
-        <div style="font-size:0.9rem;font-weight:600;color:#1d1d1f;margin-bottom:0.4rem;">v1.3.0 (2026-04-10)</div>
-        <ul style="font-size:0.85rem;line-height:1.7;color:#6e6e73;margin:0;padding-left:1.2rem;">
-          <li>修复：手动刷新、补翻译功能 404 错误</li>
-          <li>修复：版本页面路由类型错误</li>
-          <li>优化：RSS 输出按文章原始顺序排序，确保时间线正确</li>
-          <li>优化：自动提取文章发布时间（支持 time 标签、meta 标签等常见格式）</li>
-        </ul>
-      </div>
-
-      <!-- v1.2.0 -->
-      <div style="margin-bottom:1.5rem;">
-        <div style="font-size:0.9rem;font-weight:600;color:#1d1d1f;margin-bottom:0.4rem;">v1.2.0 (2026-04-10)</div>
-        <ul style="font-size:0.85rem;line-height:1.7;color:#6e6e73;margin:0;padding-left:1.2rem;">
-          <li>修复：订阅导入路由冲突问题</li>
-        </ul>
-      </div>
-
-      <!-- v1.1.0 -->
-      <div style="margin-bottom:1.5rem;">
-        <div style="font-size:0.9rem;font-weight:600;color:#1d1d1f;margin-bottom:0.4rem;">v1.1.0 (2026-04-09)</div>
-        <ul style="font-size:0.85rem;line-height:1.7;color:#6e6e73;margin:0;padding-left:1.2rem;">
-          <li>新增「RSS 源」订阅类型，支持直接订阅标准 RSS/Atom 源</li>
-          <li>新增 Google 翻译（免费）提供方，无需 API Key</li>
-          <li>新增管理界面登录认证，默认密码 admin</li>
-          <li>新增订阅导入导出功能（JSON 格式）</li>
-          <li>新增版本信息页面</li>
-          <li>优化：RSS 源支持 &lt;guid&gt; 作为文章链接</li>
-          <li>优化：RSS 源支持文章预览</li>
-          <li>优化：翻译设置页面布局调整</li>
-        </ul>
-      </div>
-
-      <!-- v1.0.0 -->
-      <div style="margin-bottom:0;">
-        <div style="font-size:0.9rem;font-weight:600;color:#1d1d1f;margin-bottom:0.4rem;">v1.0.0 (2026-04-08)</div>
-        <ul style="font-size:0.85rem;line-height:1.7;color:#6e6e73;margin:0;padding-left:1.2rem;">
-          <li>初始版本发布</li>
-          <li>支持网页抓取生成 RSS Feed</li>
-          <li>支持 AI 双语翻译（OpenRouter、OpenAI、Gemini、Claude、DeepSeek）</li>
-          <li>支持智能 Selector 推导</li>
-        </ul>
-      </div>
-
-      <div style="border-top:1px solid #e5e5ea;margin-top:1.5rem;padding-top:1rem;">
-        <div style="font-size:0.85rem;font-weight:600;color:#3a3a3c;margin-bottom:0.5rem;">技术栈</div>
-        <div style="font-size:0.85rem;line-height:1.7;color:#6e6e73;">
-          FastAPI + SQLAlchemy + SQLite + Jinja2 + HTMX
-        </div>
+    <div style="border-top:1px solid var(--light-gray);margin-top:var(--spacing-xl);padding-top:var(--spacing-lg);">
+      <div class="section-label">技术栈</div>
+      <div class="tech-stack">
+        FastAPI + SQLAlchemy + SQLite + Jinja2 + HTMX
       </div>
     </div>
   </div>
+</div>
 
-  <div style="margin-top:1rem;">
-    <a href="/" class="btn btn-secondary">返回首页</a>
-  </div>
+<div style="margin-top:var(--spacing-lg);">
+  <a href="/" class="btn btn-secondary">返回首页</a>
 </div>
 {% endblock %}
