@@ -1,4 +1,5 @@
 import os
+import warnings
 
 from fastapi import APIRouter, Depends, Form, Request, Response
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -13,7 +14,15 @@ from app.models import Setting
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
-SECRET_KEY = os.getenv("SECRET_KEY", "rssweb-default-secret-change-me")
+# 默认密钥（仅用于开发/测试，生产环境必须设置环境变量 SECRET_KEY）
+_DEFAULT_SECRET_KEY = "rssweb-dev-secret-2026"
+SECRET_KEY = os.getenv("SECRET_KEY", _DEFAULT_SECRET_KEY)
+if SECRET_KEY == _DEFAULT_SECRET_KEY:
+    warnings.warn(
+        "使用默认 SECRET_KEY，生产环境请设置环境变量 SECRET_KEY。"
+        "生成方式: python -c \"import secrets; print(secrets.token_hex(32))\"",
+        UserWarning
+    )
 SESSION_MAX_AGE = 60 * 60 * 24 * 7  # 7 天
 _serializer = URLSafeTimedSerializer(SECRET_KEY)
 _pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

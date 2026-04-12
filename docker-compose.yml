@@ -7,4 +7,7 @@ services:
       - ./data:/data
     environment:
       - DATABASE_URL=sqlite:////data/feeds.db
+      # 安全密钥：用于 session 加密。生产环境请设置：
+      # SECRET_KEY=$(python -c "import secrets; print(secrets.token_hex(32))")
+      - SECRET_KEY=rssweb-dev-secret-2026
     restart: unless-stopped

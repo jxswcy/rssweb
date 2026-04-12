@@ -5,30 +5,43 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import func, case
 
 from app.constants import TZ_SHANGHAI
 from app.database import get_db
 from app.models import Article, Feed, ReadStatus
 from app.routers.auth import require_login
-from app.rss import _interleave_bilingual
+from app.rss import _interleave_bilingual, _build_bilingual_title
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
 
 def _get_unread_counts(db: Session) -> dict:
-    """获取各订阅源的未读文章数"""
-    feeds = db.query(Feed).all()
-    counts = {}
-    for feed in feeds:
-        # 查询该 feed 下未读文章数
-        read_ids = db.query(ReadStatus.article_id).filter(ReadStatus.is_read == True)
-        count = db.query(Article).filter(
-            Article.feed_id == feed.id,
-            ~Article.id.in_(read_ids),
-        ).count()
-        counts[feed.id] = count
-    return counts
+    """获取各订阅源的未读文章数（单次查询优化）"""
+    # 使用 LEFT JOIN 一次查询获取所有 feed 的未读数
+    # 未读 = 文章没有对应的 ReadStatus 记录，或 is_read 为 False
+    # 注意：需要先检查 Article.id IS NOT NULL，否则无文章的 Feed 会产生错误的未读数
+    result = db.query(
+        Feed.id,
+        func.count(Article.id).label("total"),
+        func.coalesce(
+            func.sum(
+                case(
+                    (Article.id == None, 0),  # 无文章时返回 0
+                    (ReadStatus.is_read == False, 1),
+                    (ReadStatus.is_read == None, 1),
+                    else_=0
+                )
+            ), 0
+        ).label("unread")
+    ).outerjoin(
+        Article, Feed.id == Article.feed_id
+    ).outerjoin(
+        ReadStatus, Article.id == ReadStatus.article_id
+    ).group_by(Feed.id).all()
+
+    return {feed_id: int(unread) for feed_id, total, unread in result}
 
 
 @router.get("/reader", response_class=HTMLResponse)
@@ -121,10 +134,12 @@ async def get_article_detail(
         existing.read_at = datetime.now(TZ_SHANGHAI)
         db.commit()
 
-    # 生成双语内容
+    # 生成双语内容（包含双语标题）
     bilingual_content = ""
     if article.content_translated and article.content_original:
-        bilingual_content = _interleave_bilingual(
+        # 添加双语标题
+        title_html = _build_bilingual_title(article.title, article.title_translated)
+        bilingual_content = title_html + _interleave_bilingual(
             article.content_original, article.content_translated
         )
 

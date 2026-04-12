@@ -70,7 +70,6 @@ async def create_feed(
     url: str = Form(...),
     article_selector: Optional[str] = Form(None),
     content_selector: Optional[str] = Form(None),
-    show_images: bool = Form(False),
     translation_enabled: bool = Form(False),
     ai_provider: str = Form("openai"),
     ai_model: Optional[str] = Form(None),
@@ -84,7 +83,6 @@ async def create_feed(
         url=url,
         article_selector=article_selector or None,
         content_selector=content_selector or None,
-        show_images=show_images,
         translation_enabled=translation_enabled,
         ai_provider=ai_provider,
         ai_model=ai_model or None,
@@ -180,7 +178,6 @@ async def export_feeds(db: Session = Depends(get_db), _: None = Depends(require_
                 "feed_type": f.feed_type,
                 "article_selector": f.article_selector,
                 "content_selector": f.content_selector,
-                "show_images": f.show_images,
                 "translation_enabled": f.translation_enabled,
                 "ai_provider": f.ai_provider,
                 "ai_model": f.ai_model,
@@ -223,7 +220,6 @@ async def import_feeds(
                     feed_type=item.get("feed_type", "webpage"),
                     article_selector=item.get("article_selector"),
                     content_selector=item.get("content_selector"),
-                    show_images=item.get("show_images", False),
                     translation_enabled=item.get("translation_enabled", False),
                     ai_provider=item.get("ai_provider", "openrouter"),
                     ai_model=item.get("ai_model"),
@@ -326,7 +322,6 @@ async def update_feed(
     url: str = Form(...),
     article_selector: Optional[str] = Form(None),
     content_selector: Optional[str] = Form(None),
-    show_images: bool = Form(False),
     translation_enabled: bool = Form(False),
     ai_provider: str = Form("openai"),
     ai_model: Optional[str] = Form(None),
@@ -342,7 +337,6 @@ async def update_feed(
     feed.url = url
     feed.article_selector = article_selector or None
     feed.content_selector = content_selector or None
-    feed.show_images = show_images
     feed.translation_enabled = translation_enabled
     feed.ai_provider = ai_provider
     feed.ai_model = ai_model or None

@@ -45,7 +45,6 @@ def init_db():
             "ALTER TABLE feeds ADD COLUMN feed_type TEXT DEFAULT 'webpage'",
             "ALTER TABLE articles ADD COLUMN published_at DATETIME",
             "ALTER TABLE articles ADD COLUMN order_index INTEGER",
-            "ALTER TABLE feeds ADD COLUMN show_images BOOLEAN DEFAULT 0",
             # 索引迁移（幂等）
             "CREATE INDEX IF NOT EXISTS ix_articles_feed_order ON articles(feed_id, order_index)",
             # read_status 表（已读状态）

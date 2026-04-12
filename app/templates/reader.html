@@ -39,17 +39,106 @@
     flex-direction: column;
   }
 
-  /* 工具栏 - 统一高度 */
+  /* 功能标题区 - 三栏高度一致 */
   .panel-header {
-    height: 48px;
-    min-height: 48px;
+    height: 60px;
+    min-height: 60px;
     padding: 0 var(--spacing-lg);
-    border-bottom: 1px solid var(--light-gray);
     display: flex;
     justify-content: space-between;
     align-items: center;
     background: var(--white);
     flex-shrink: 0;
+    border-bottom: 1px solid var(--light-gray);
+  }
+
+  /* 文章标题区 - 第三栏专属，高度是文章列表项的2倍 */
+  .article-title-header {
+    height: 120px;
+    min-height: 120px;
+    padding: var(--spacing-md) var(--spacing-lg) 0 var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    background: var(--snow);
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--light-gray);
+  }
+
+  .article-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+  }
+
+  .article-title-text {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .article-title-text h2 {
+    font-size: 1.25rem;
+    font-weight: 500;
+    margin: 0 0 var(--spacing-sm) 0;
+    line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .article-title-meta {
+    font-size: 12px;
+    color: var(--stone);
+  }
+
+  .article-title-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    flex-shrink: 0;
+  }
+
+  .article-action-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    margin-top: 16px;
+  }
+
+  .article-action-btns {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+  }
+
+  /* 统一操作按钮样式 */
+  .action-btn {
+    font-size: 12px;
+    padding: 4px 12px;
+    border: none;
+    border-radius: var(--radius-pill);
+    background: var(--light-gray);
+    color: var(--stone);
+    cursor: pointer;
+    transition: all 0.15s;
+    text-decoration: none;
+  }
+
+  .action-btn:hover {
+    background: var(--silver);
+    color: var(--black);
+  }
+
+  .action-btn.primary {
+    background: var(--light-gray);
+    color: var(--black);
+  }
+
+  .action-btn.primary:hover {
+    background: var(--silver);
   }
 
   .panel-title {
@@ -57,16 +146,40 @@
     font-size: 14px;
   }
 
+  /* 第1、2栏标题区 - 单行 */
+  .panel-header-compact {
+    height: 60px;
+    min-height: 60px;
+    padding: 0 var(--spacing-lg);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--white);
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--light-gray);
+  }
+
+  .panel-header-compact .panel-title {
+    font-size: 14px;
+  }
+
+  /* 列表内容区域 - 与第三栏对齐 */
+  .list-content {
+    flex: 1;
+    overflow-y: auto;
+  }
+
   /* 内容区域 */
   .content-body {
     flex: 1;
     overflow-y: auto;
-    padding: var(--spacing-xl);
+    padding: var(--spacing-lg) var(--spacing-xl) var(--spacing-xl);
   }
 
   /* 订阅源列表 */
   .feed-item {
-    padding: var(--spacing-md) var(--spacing-lg);
+    padding: 0 var(--spacing-lg);
+    height: 60px;
     cursor: pointer;
     display: flex;
     justify-content: space-between;
@@ -80,6 +193,8 @@
 
   .feed-item.active {
     background: var(--snow);
+    border-left: 3px solid var(--black);
+    padding-left: calc(var(--spacing-lg) - 3px);
     font-weight: 500;
   }
 
@@ -88,6 +203,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    font-size: 14px;
   }
 
   .unread-badge {
@@ -102,12 +218,13 @@
 
   /* 文章列表 */
   .article-item {
-    padding: var(--spacing-md) var(--spacing-lg);
+    padding: 0 var(--spacing-lg);
+    height: 60px;
     cursor: pointer;
     border-bottom: 1px solid var(--light-gray);
     background: var(--white);
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: var(--spacing-sm);
   }
 
@@ -119,6 +236,7 @@
     background: var(--white);
     border-left: 3px solid var(--black);
     padding-left: calc(var(--spacing-lg) - 3px);
+    font-weight: 500;
   }
 
   /* 未读圆点指示器 */
@@ -128,7 +246,6 @@
     border-radius: 50%;
     background: var(--black);
     flex-shrink: 0;
-    margin-top: 6px;
     display: none;
   }
 
@@ -139,18 +256,19 @@
   .article-content-wrapper {
     flex: 1;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
   }
 
   .article-title {
     font-size: 14px;
     font-weight: 400;
-    margin-bottom: 4px;
     line-height: 1.4;
     overflow: hidden;
     text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
+    white-space: nowrap;
   }
 
   .article-item.unread .article-title {
@@ -167,6 +285,72 @@
     color: var(--stone);
   }
 
+  /* 文章过滤按钮 - 简洁风格 */
+  .filter-btn-group {
+    display: flex;
+    background: var(--light-gray);
+    border-radius: var(--radius-pill);
+    padding: 2px;
+  }
+
+  .filter-btn {
+    font-size: 12px;
+    padding: 4px 12px;
+    border: none;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--stone);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .filter-btn:hover {
+    color: var(--black);
+  }
+
+  .filter-btn.active {
+    background: var(--white);
+    color: var(--black);
+    font-weight: 500;
+  }
+
+  /* 字体大小控制按钮 */
+  .font-size-control {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--snow);
+    border-radius: var(--radius-sm);
+    padding: 2px;
+  }
+
+  .font-size-btn {
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: transparent;
+    color: var(--stone);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .font-size-btn:hover {
+    background: var(--white);
+    color: var(--black);
+  }
+
+  .font-size-label {
+    font-size: 12px;
+    color: var(--stone);
+    min-width: 20px;
+    text-align: center;
+  }
+
   /* 文章详情 */
   .article-header {
     margin-bottom: var(--spacing-xl);
@@ -175,10 +359,10 @@
   }
 
   .article-header h1 {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     font-weight: 500;
-    margin-bottom: var(--spacing-md);
-    line-height: 1.3;
+    margin-bottom: var(--spacing-sm);
+    line-height: 1.35;
     font-family: "SF Pro Rounded", system-ui, -apple-system, sans-serif;
   }
 
@@ -205,7 +389,7 @@
 
   .article-content {
     line-height: 1.8;
-    font-size: 16px;
+    font-size: 18px;
   }
 
   .article-content p {
@@ -281,10 +465,11 @@
 <div class="reader-container">
   <!-- 左栏：订阅源列表 -->
   <div class="feed-panel mobile-active" id="feed-panel">
-    <div class="panel-header">
+    <div class="panel-header-compact">
       <span class="panel-title">订阅源</span>
+      <span></span>
     </div>
-    <div id="feed-list" style="flex:1;overflow-y:auto;">
+    <div id="feed-list" class="list-content">
       {% if feeds %}
         {% for feed in feeds %}
         <div class="feed-item{% if feed.id == selected_feed_id %} active{% endif %}"
@@ -307,16 +492,24 @@
 
   <!-- 中栏：文章列表 -->
   <div class="article-panel" id="article-panel">
-    <div class="panel-header">
-      <button class="btn mobile-back-btn" onclick="goBack('feed')" style="font-size:12px;padding:4px 12px;">返回</button>
-      <span class="panel-title" id="article-panel-title">选择订阅源</span>
-      <button class="btn" id="mark-all-read-btn" style="display:none;font-size:12px;padding:4px 12px;"
-        hx-post=""
-        hx-target="#mark-all-read-result">
-        全部已读
-      </button>
+    <div class="panel-header-compact">
+      <div style="display:flex;align-items:center;gap:var(--spacing-sm);">
+        <button class="btn mobile-back-btn" onclick="goBack('feed')" style="font-size:11px;padding:2px 8px;">返回</button>
+        <span class="panel-title" id="article-panel-title">选择订阅源</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:var(--spacing-sm);">
+        <div class="filter-btn-group" id="filter-btn-group" style="display:none;">
+          <button class="filter-btn active" data-filter="unread" onclick="setFilter('unread')">未读</button>
+          <button class="filter-btn" data-filter="all" onclick="setFilter('all')">全部</button>
+        </div>
+        <button class="action-btn primary" id="mark-all-read-btn" style="display:none;"
+          hx-post=""
+          hx-target="#mark-all-read-result">
+          全部已读
+        </button>
+      </div>
     </div>
-    <div id="article-list" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;">
+    <div id="article-list" class="list-content">
       <div class="empty-state">
         <p>请从左侧选择订阅源</p>
       </div>
@@ -326,10 +519,32 @@
 
   <!-- 右栏：文章详情 -->
   <div class="content-panel" id="content-panel">
-    <div class="panel-header" id="content-header">
+    <div class="panel-header">
       <button class="btn mobile-back-btn" onclick="goBack('article')" style="font-size:12px;padding:4px 12px;">返回列表</button>
-      <span class="panel-title" id="content-panel-title">文章详情</span>
+      <span class="panel-title">文章详情</span>
       <span></span>
+    </div>
+    <div class="article-title-header" id="article-title-header" style="display:none;">
+      <div class="article-title-row">
+        <div class="article-title-text">
+          <h2 id="article-display-title">文章标题</h2>
+          <div class="article-title-meta">
+            <span id="article-display-source"></span>
+          </div>
+        </div>
+      </div>
+      <div class="article-action-row">
+        <div class="article-action-btns">
+          <a href="#" id="article-original-link" target="_blank" rel="noopener" class="action-btn primary">原文链接</a>
+          <button class="action-btn" id="mark-unread-btn">标记未读</button>
+          <span id="read-status-result"></span>
+        </div>
+        <div class="font-size-control">
+          <button class="font-size-btn" onclick="changeFontSize(-1)" title="缩小字体">−</button>
+          <span class="font-size-label" id="font-size-label">18</span>
+          <button class="font-size-btn" onclick="changeFontSize(1)" title="放大字体">+</button>
+        </div>
+      </div>
     </div>
     <div class="content-body" id="content-body">
       <div class="empty-state" id="content-empty">
@@ -344,6 +559,62 @@
 let currentFeedId = null;
 let currentArticleId = null;
 let currentFeedName = '';
+let currentFilter = 'unread';  // 'unread' 或 'all'
+let currentFontSize = 18;  // 默认字体大小
+
+function changeFontSize(delta) {
+  currentFontSize = Math.max(12, Math.min(24, currentFontSize + delta));
+  document.getElementById('font-size-label').textContent = currentFontSize;
+  const articleContent = document.querySelector('.article-content');
+  if (articleContent) {
+    articleContent.style.fontSize = currentFontSize + 'px';
+  }
+  // 保存到 localStorage
+  localStorage.setItem('reader-font-size', currentFontSize);
+}
+
+// 页面加载时恢复字体大小
+document.addEventListener('DOMContentLoaded', function() {
+  const savedSize = localStorage.getItem('reader-font-size');
+  if (savedSize) {
+    currentFontSize = parseInt(savedSize, 10);
+    document.getElementById('font-size-label').textContent = currentFontSize;
+  }
+
+  // 监听 HTMX 内容加载完成事件
+  document.body.addEventListener('htmx:afterSwap', function(evt) {
+    if (evt.detail.target.id === 'article-detail') {
+      const articleContent = document.querySelector('.article-content');
+      if (articleContent) {
+        articleContent.style.fontSize = currentFontSize + 'px';
+      }
+      // 更新文章标题区域
+      const articleData = document.getElementById('article-data');
+      if (articleData) {
+        const title = articleData.dataset.title;
+        const source = articleData.dataset.source;
+        const url = articleData.dataset.url;
+        const articleId = articleData.dataset.id;
+        const published = articleData.dataset.published;
+
+        document.getElementById('article-display-title').textContent = title;
+        document.getElementById('article-display-source').textContent =
+          published ? source + ' · ' + published : source;
+        document.getElementById('article-original-link').href = url;
+        document.getElementById('article-title-header').style.display = 'block';
+
+        // 设置标记未读按钮
+        const markUnreadBtn = document.getElementById('mark-unread-btn');
+        markUnreadBtn.onclick = function() {
+          htmx.ajax('POST', `/reader/articles/${articleId}/unread`, {
+            target: '#read-status-result',
+            swap: 'innerHTML'
+          });
+        };
+      }
+    }
+  });
+});
 
 function selectFeed(feedId, feedName) {
   currentFeedId = feedId;
@@ -357,29 +628,46 @@ function selectFeed(feedId, feedName) {
   // 更新标题
   document.getElementById('article-panel-title').textContent = feedName;
 
-  // 显示"全部已读"按钮
+  // 显示过滤按钮和"全部已读"按钮
+  document.getElementById('filter-btn-group').style.display = 'flex';
   const markAllBtn = document.getElementById('mark-all-read-btn');
   markAllBtn.style.display = 'inline-block';
   markAllBtn.setAttribute('hx-post', `/reader/feeds/${feedId}/mark-all-read`);
   htmx.process(markAllBtn);
 
-  // 加载文章列表
-  htmx.ajax('GET', `/reader/feeds/${feedId}/articles`, {
-    target: '#article-list',
-    swap: 'innerHTML'
-  });
+  // 加载文章列表（使用当前过滤状态）
+  loadArticleList();
 
   // 清空文章详情
   document.getElementById('article-detail').style.display = 'none';
   document.getElementById('article-detail').innerHTML = '';
+  document.getElementById('article-title-header').style.display = 'none';
   document.getElementById('content-empty').style.display = 'flex';
-  document.getElementById('content-panel-title').textContent = '文章详情';
 
   // 移动端切换
   if (window.innerWidth <= 768) {
     document.getElementById('feed-panel').classList.remove('mobile-active');
     document.getElementById('article-panel').classList.add('mobile-active');
   }
+}
+
+function setFilter(filter) {
+  currentFilter = filter;
+  // 更新按钮状态
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.filter === filter);
+  });
+  // 重新加载文章列表
+  loadArticleList();
+}
+
+function loadArticleList() {
+  if (!currentFeedId) return;
+  const unreadOnly = currentFilter === 'unread';
+  htmx.ajax('GET', `/reader/feeds/${currentFeedId}/articles?unread_only=${unreadOnly}`, {
+    target: '#article-list',
+    swap: 'innerHTML'
+  });
 }
 
 function selectArticle(articleId) {
@@ -430,12 +718,7 @@ function goBack(target) {
 }
 
 function showAllArticles() {
-  if (currentFeedId) {
-    htmx.ajax('GET', `/reader/feeds/${currentFeedId}/articles?unread_only=false`, {
-      target: '#article-list',
-      swap: 'innerHTML'
-    });
-  }
+  setFilter('all');
 }
 </script>
 {% endblock %}

@@ -22,9 +22,6 @@
 {% else %}
 <div class="empty-state">
   <p>暂无{% if unread_only %}未读{% endif %}文章</p>
-  {% if unread_only and feed %}
-  <button class="btn" onclick="showAllArticles()">显示全部文章</button>
-  {% endif %}
 </div>
 {% endif %}
 </div>

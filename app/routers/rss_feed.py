@@ -20,7 +20,10 @@ async def get_rss(feed_id: int, request: Request, db: Session = Depends(get_db))
     if feed.translation_enabled:
         query = query.filter(Article.content_translated.isnot(None))
     # 排序：按发布时间倒序（最新在前），其次按抓取时间倒序
-    articles = query.order_by(Article.published_at.desc(), Article.fetched_at.desc()).limit(50).all()
+    articles = query.order_by(
+        Article.published_at.desc().nullslast(),
+        Article.fetched_at.desc()
+    ).limit(50).all()
 
     base_url = str(request.base_url).rstrip("/")
     xml_bytes = generate_rss_feed(feed, articles, base_url=base_url)

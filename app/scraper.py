@@ -200,6 +200,16 @@ def _extract_publish_time(soup: BeautifulSoup) -> Optional[datetime]:
                     except Exception:
                         pass
 
+    # 4. Posthaven 格式: <span class="posthaven-formatted-date" data-unix-time="...">
+    if dt is None:
+        ph_time = soup.find("span", class_="posthaven-formatted-date")
+        if ph_time and ph_time.get("data-unix-time"):
+            try:
+                ts = int(ph_time["data-unix-time"])
+                dt = datetime.fromtimestamp(ts, tz=TZ_SHANGHAI)
+            except Exception:
+                pass
+
     if dt is None:
         return None
 

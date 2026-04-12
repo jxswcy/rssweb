@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from html import escape as html_escape
 from feedgen.feed import FeedGenerator
 from bs4 import BeautifulSoup
 
@@ -76,11 +77,26 @@ def generate_rss_feed(feed: Feed, articles: list[Article], base_url: str) -> byt
         fe.published(pub)
         fe.updated(pub)
 
+        # 构建正文：标题双语 + 正文内容
+        title_html = _build_bilingual_title(article.title, article.title_translated)
+
         if article.content_translated:
-            content = _interleave_bilingual(article.content_original, article.content_translated)
+            content = title_html + _interleave_bilingual(article.content_original, article.content_translated)
         else:
-            content = article.content_original or ""
+            content = title_html + (article.content_original or "")
 
         fe.content(content, type="html")
 
     return fg.atom_str(pretty=True)
+
+
+def _build_bilingual_title(original: str, translated: str | None) -> str:
+    """构建双语标题 HTML，原文斜体灰色，译文正常显示。自动转义 HTML 特殊字符。"""
+    safe_original = html_escape(original)
+    if not translated or translated == original:
+        return f"<h1>{safe_original}</h1>"
+    safe_translated = html_escape(translated)
+    return (
+        f'<h1 style="color:#555;font-style:italic;">{safe_original}</h1>'
+        f"<h1>{safe_translated}</h1>"
+    )

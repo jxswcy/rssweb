@@ -146,8 +146,10 @@ async def translate_text(
                         continue
                     try:
                         translated_text = await _translate_text_google_free(plain, target_lang)
-                        p.clear()
-                        p.append(translated_text)
+                        # 保留标签属性，只替换文本内容
+                        for child in list(p.children):
+                            child.extract()
+                        p.string = translated_text
                         para_count += 1
                     except Exception as exc:
                         logger.warning("[翻译] google_free 段落翻译失败: %s", exc)
