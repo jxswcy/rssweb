@@ -33,7 +33,8 @@ app = FastAPI(title="RSS Web", lifespan=lifespan)
 
 @app.exception_handler(_LoginRequired)
 async def login_required_handler(request: Request, exc: _LoginRequired):
-    return RedirectResponse(url="/login", status_code=303)
+    redirect_url = exc.redirect_url
+    return RedirectResponse(url=f"/login?redirect={redirect_url}", status_code=303)
 
 
 app.include_router(auth_router)

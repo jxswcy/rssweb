@@ -36,19 +36,20 @@ def verify_session(request: Request) -> bool:
 
 
 class _LoginRequired(Exception):
-    pass
+    def __init__(self, redirect_url: str = "/"):
+        self.redirect_url = redirect_url
 
 
 def require_login(request: Request):
     """FastAPI 依赖函数：验证登录状态，未登录则抛出 _LoginRequired"""
     if not verify_session(request):
-        raise _LoginRequired()
+        raise _LoginRequired(str(request.url.path))
 
 
 @router.get("/login", response_class=HTMLResponse)
-async def login_page(request: Request, error: str = ""):
+async def login_page(request: Request, error: str = "", redirect: str = ""):
     return templates.TemplateResponse(
-        "login.html", {"request": request, "error": error}
+        "login.html", {"request": request, "error": error, "redirect": redirect}
     )
 
 
@@ -57,12 +58,14 @@ async def login(
     request: Request,
     response: Response,
     password: str = Form(...),
+    redirect: str = Form(""),
     db: Session = Depends(get_db),
 ):
     pwd_hash = _get_password_hash(db)
     if pwd_hash and _pwd_context.verify(password, pwd_hash):
         token = _serializer.dumps("admin")
-        resp = RedirectResponse(url="/", status_code=303)
+        target_url = redirect if redirect else "/"
+        resp = RedirectResponse(url=target_url, status_code=303)
         resp.set_cookie(
             "session", token,
             max_age=SESSION_MAX_AGE,
@@ -72,7 +75,7 @@ async def login(
         return resp
     return templates.TemplateResponse(
         "login.html",
-        {"request": request, "error": "密码错误"},
+        {"request": request, "error": "密码错误", "redirect": redirect},
         status_code=200,
     )
 
